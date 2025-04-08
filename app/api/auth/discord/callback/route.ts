@@ -66,15 +66,6 @@ export async function GET(request: NextRequest) {
       return response
     }
 
-    /*const guildMemberResponse = await fetch(`https://discord.com/api/guilds/${process.env.DISCORD_TARGET_GUILD_ID}/members/${userData.id}`, {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` }
-    });
-
-    const guildMemberData = await guildMemberResponse.json();
-
-    console.log("guild member get")
-    console.log(guildMemberData.nick)*/
-
     // JWT を生成してクッキーに保存
     const token = signToken({
       id: userData.id,

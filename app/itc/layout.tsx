@@ -16,12 +16,15 @@ export default async function RootLayout({
                     <LoginDiscord />
                     :
                     <AuthProvider token={token}>
-                        <div className="flex gap-1">
-                            <Menu username={token.username ?? "error!"} />
-                            {children}
+                        <div className="grid grid-cols-12 gap-1">
+                            <div className="col-span-2">
+                                <Menu username={token.username ?? "error!"} />
+                            </div>
+                            <div className="col-span-10">
+                                {children}
+                            </div>
                         </div>
                     </AuthProvider>
-
             }
         </div>
     )

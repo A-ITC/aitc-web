@@ -42,3 +42,4 @@ export const getRoles = async () => {
     const dat: RoleData[] = JSON.parse(dataJson)
     return dat
 }
+

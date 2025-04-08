@@ -21,6 +21,16 @@ export const getWorks = async () => {
     }
 }
 
+export const getWork = async (id: string) => {
+    try {
+        const dataJson = await fs.promises.readFile(getWorksPath(), 'utf-8')
+        const dat: WorkCompilationData[] = JSON.parse(dataJson)
+        return dat.find((d) => d.id === id)
+    } catch (e: any) {
+        console.log("error" + e)
+        return undefined
+    }
+}
 export const getMemberWorks = async (member_id: string) => {
     try {
         const dataJson = await fs.promises.readFile(getWorksPath(), 'utf-8')

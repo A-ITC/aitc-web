@@ -1,11 +1,12 @@
 import { MemberData } from "@/app/lib/member";
+import Link from "next/link";
 
 interface MemberProps {
     data: MemberData
 }
 
 export default function Member({ data }: MemberProps) {
-    return <div className="m-1 hover:underline">
+    return <Link href={`/itc/users/${data.id}`} className="m-1 hover:underline">
         {data.name}
-    </div>
+    </Link>
 }
