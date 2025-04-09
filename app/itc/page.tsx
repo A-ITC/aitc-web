@@ -1,12 +1,10 @@
 
-import { getMembers, getRoles } from "../lib/member"
-import Members from "./components/members"
+
+import { getVerifiedToken } from "../lib/token"
+import MemberWorks from "./components/memberWorks"
 
 export default async function Page() {
-    const members = await getMembers()
-    const roles = await getRoles()
+    const token = await getVerifiedToken()
 
-    return <div className="">
-        <Members data={members} roles={roles} />
-    </div>
+    return <MemberWorks id={token?.id ?? ""} />
 }
