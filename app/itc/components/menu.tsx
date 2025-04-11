@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
 import LogoutDiscord from "./discord_logout"
+import WindowFrame from "./windowFrame"
 
 interface MenuProps {
     username: string
@@ -26,23 +27,25 @@ export default function Menu({ username }: MenuProps) {
         }
     ]
 
-    return <div className="flex flex-wrap flex-col bg-neutral-800 border rounded border-neutral-600 bg-opacity-60 p-2 items-center gap-1 text-lg font-semibold h-min">
-        <Link href={"/itc"} className="p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-50 hover:bg-opacity-20 rounded-md">
-            {username}
-        </Link>
-        <hr className="w-full border-neutral-600 my-2" />
-        {
-            menus.map((m) => <Link href={m.link} className="p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-50 hover:bg-opacity-20 rounded-md" key={m.name}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" className="fill-neutral-50" width={20} height={20}>
-                    <path d={m.path} />
-                </svg>
-                {
-                    m.name
-                }
+    return <WindowFrame>
+        <div className="text-lg font-semibold w-full">
+            <Link href={"/itc"} className="p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-50 hover:bg-opacity-20 rounded-md">
+                {username}
             </Link>
-            )
-        }
-        <hr className="w-full border-neutral-600 my-2" />
-        <LogoutDiscord />
-    </div>
+            <hr className="w-full border-neutral-600 my-2" />
+            {
+                menus.map((m) => <Link href={m.link} className="p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-50 hover:bg-opacity-20 rounded-md" key={m.name}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" className="fill-neutral-50" width={20} height={20}>
+                        <path d={m.path} />
+                    </svg>
+                    {
+                        m.name
+                    }
+                </Link>
+                )
+            }
+            <hr className="w-full border-neutral-600 my-2" />
+            <LogoutDiscord />
+        </div>
+    </WindowFrame>
 }

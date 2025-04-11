@@ -5,6 +5,7 @@ import { getMemberWorks, getWork, getWorks } from "@/app/lib/getWork";
 import { apiURL } from "@/app/lib/image";
 import { WorkCompilationData, WorkData } from "@/app/value/data";
 import Member from "./member";
+import WindowFrame from "./windowFrame";
 
 interface RoleProps {
     roles: RoleData[]
@@ -114,12 +115,12 @@ export default async function MemberWorks({ id }: MemberWorksProps) {
     const roles = await getRoles()
 
     if (!member) {
-        return <div className="bg-neutral-800 border rounded border-neutral-600 bg-opacity-60 p-2 w-full overflow-x-auto">
+        return <WindowFrame>
             error! '{id}'
-        </div>
+        </WindowFrame>
     }
 
-    return <div className="bg-neutral-800 border rounded border-neutral-600 bg-opacity-60 p-2 w-full">
+    return <WindowFrame>
         <div className="font-bold text-2xl m-2">
             {
                 member.name
@@ -170,6 +171,6 @@ export default async function MemberWorks({ id }: MemberWorksProps) {
                 member.roles.map((r) => <SimilarMembers members={members} roles={roles} own_member_id={id} same_role={r} />)
             }
         </div>
-    </div>
+    </WindowFrame>
 }
 
