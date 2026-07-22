@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
-const basePath = process.env.GITHUB_ACTIONS ? "/aitc-web" : "";
+const basePath = process.env.CUSTOM_DOMAIN
+  ? ""
+  : process.env.GITHUB_ACTIONS
+    ? "/aitc-web"
+    : "";
 
 const nextConfig: NextConfig = {
   output: "export",
