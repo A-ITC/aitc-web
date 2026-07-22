@@ -1,0 +1,107 @@
+.main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 52px 24px 110px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.card {
+  background: #fff;
+  border: 1px solid #dbe4f0;
+  padding: 24px;
+  display: grid;
+  gap: 22px;
+  transition: 0.22s;
+}
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-4px);
+  border-color: #90b1f3;
+  box-shadow: 0 16px 30px #17356216;
+}
+.card:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.card img {
+  width: 104px;
+  border-radius: 50%;
+  background: #dfe9f7;
+}
+.card h2 {
+  font-size: 25px;
+  letter-spacing: -0.06em;
+  margin: 5px 0 10px;
+}
+.description {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #596b80;
+  margin: 0;
+  min-height: 68px;
+}
+.cta {
+  display: block;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 20px;
+}
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.filterGroup > span {
+  min-width: 50px;
+}
+.filterLink {
+  border: 1px solid #dbe4f0;
+  background: #fff;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.filterLink:hover,
+.filterLink:focus-visible,
+.active {
+  background: var(--accent-gradient);
+  color: #fff;
+  border-color: var(--blue);
+}
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    grid-template-columns: 92px 1fr;
+    align-items: start;
+    padding: 18px;
+  }
+  .card img {
+    width: 92px;
+  }
+  .description {
+    min-height: 0;
+  }
+  .cta {
+    margin-top: 10px;
+  }
+  .filterGroup {
+    align-items: flex-start;
+  }
+  .filterGroup > span {
+    padding-top: 7px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

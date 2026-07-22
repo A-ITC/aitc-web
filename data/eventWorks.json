@@ -1,0 +1,181 @@
+[
+  {
+    "id": "e1",
+    "title": "COMPILE",
+    "thumbnail": "/images/eventWorks/COMPILE.webp",
+    "type": "Music",
+    "description": "2020春M3 I-21aにて頒布予定だったAITC初のコンピレーションアルバム",
+    "creatorIds": [
+      "leaf7",
+      "ohoho",
+      "yosei",
+      "kasai",
+      "euk",
+      "yanagawa",
+      "kurayuki",
+      "kyoichi",
+      "zyuuziro",
+      "tendon",
+      "naki"
+    ],
+    "event": "2020春M3",
+    "year": 2020,
+    "links": [
+      {
+        "name": "告知ページ(X)",
+        "url": "https://x.com/AInfoTechClub/status/1231919639044579328"
+      }
+    ]
+  },
+  {
+    "id": "e2",
+    "title": "BOILED",
+    "thumbnail": "/images/eventWorks/BOILED.webp",
+    "type": "Music",
+    "description": "2021年にリリースしたAITC初のデジタルアルバム",
+    "creatorIds": [
+      "naki",
+      "yosei",
+      "kasai",
+      "yanagawa",
+      "euk",
+      "zyuuziro",
+      "tendon",
+      "massy"
+    ],
+    "event": "",
+    "year": 2021,
+    "links": [
+      {
+        "name": "告知ページ(X)",
+        "url": "https://x.com/AInfoTechClub/status/1393521870289346560"
+      },
+      {
+        "name": "bandcamp",
+        "url": "https://aitccreators.bandcamp.com/album/boiled"
+      }
+    ]
+  },
+  {
+    "id": "e3",
+    "title": "Halloween",
+    "thumbnail": "/images/eventWorks/Halloween.jpg",
+    "type": "Music",
+    "description": "2022秋M3 L-05bにて頒布したコンピレーションアルバム",
+    "creatorIds": [
+      "naki",
+      "rousok",
+      "yosei",
+      "yuhgao",
+      "signum",
+      "toku",
+      "massy",
+      "alfzero",
+      "tendon",
+      "zyuuziro",
+      "kyoichi"
+    ],
+    "event": "2022秋M3",
+    "year": 2022,
+    "links": [
+      {
+        "name": "告知ページ(X)",
+        "url": "https://x.com/AInfoTechClub/status/1585984950880567296"
+      },
+      {
+        "name": "soundcloud",
+        "url": "https://on.soundcloud.com/U20QVWqv4LuuYx9Cij"
+      }
+    ]
+  },
+  {
+    "id": "e4",
+    "title": "AITC Art book vol.1",
+    "thumbnail": "/images/eventWorks/AITC_art_book_vol_1.webp",
+    "type": "Illustration",
+    "description": "コミティア144 D34bで頒布した「旅」をテーマにした、8名のイラスト集",
+    "creatorIds": [
+      "kasai",
+      "nariyuru",
+      "kyoichi",
+      "remi",
+      "rousok",
+      "yosei",
+      "ayataka",
+      "yuramu",
+      "akatsuki"
+    ],
+    "event": "コミティア144",
+    "year": 2023,
+    "links": [
+      {
+        "name": "告知ページ(X)",
+        "url": "https://x.com/AInfoTechClub/status/1653058637747863552"
+      }
+    ]
+  },
+  {
+    "id": "e5",
+    "title": "AITC Vol.4",
+    "thumbnail": "/images/eventWorks/AITCvol.4.png",
+    "type": "Music",
+    "description": "M3-2024 秋 J-04aで頒布した、未来都市をイメージしたコンピレーションアルバム",
+    "creatorIds": [
+      "naki",
+      "kyoichi",
+      "massy",
+      "matsuki",
+      "yuhgao",
+      "kasai",
+      "yanagawa",
+      "tmak",
+      "yosei",
+      "xeam",
+      "sake",
+      "akatsuki",
+      "remi",
+      "leaf7",
+      "ayataka",
+      "rai",
+      "yuramu"
+    ],
+    "event": "M3-2024 秋",
+    "year": 2024,
+    "links": [
+      {
+        "name": "告知ページ(X)",
+        "url": "https://x.com/AInfTechClub/status/1849988358619136439"
+      },
+      {
+        "name": "soundcloud",
+        "url": "https://soundcloud.com/aitc-works/m3-2024-aitcvol4-crossfade?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing"
+      }
+    ]
+  },
+  {
+    "id": "e6",
+    "title": "AITC Calendar",
+    "thumbnail": "/images/eventWorks/AITC_calendar.png",
+    "type": "Illustration",
+    "description": "コミティア153 き36bで頒布した、2026年カレンダー",
+    "creatorIds": [
+      "kyoichi",
+      "remi",
+      "ayataka",
+      "serize",
+      "xeam",
+      "nariyuru",
+      "cay",
+      "akatsuki",
+      "bacon"
+    ],
+    "event": "コミティア153",
+    "year": 2025,
+    "links": [
+      {
+        "name": "告知ページ(X)",
+        "url": "https://x.com/AInfTechClub/status/1963613639891661173"
+      }
+    ]
+  }
+]
