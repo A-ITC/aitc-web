@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { members, withBasePath } from "./data";
+import { members } from "./data";
+import { MemberIcon } from "./member-icon";
 import styles from "./members.module.css";
 
 export function MemberDirectoryBrowser() {
@@ -91,7 +92,7 @@ export function MemberDirectoryBrowser() {
               }
             >
               <Link href={`/members/${member.id}`} className={styles.card}>
-                <img src={withBasePath(member.icon ?? "")} alt={`${member.name}のアイコン`} />
+                <MemberIcon id={member.id} name={member.name} />
                 <div>
                   <p className="eyebrow">
                     {member.department.join(" / ")} · 第{member.generation}期

@@ -1,5 +1,6 @@
-import { eventWorks, members, personalWorks, withBasePath } from "../data";
+import { eventWorks, members, personalWorks } from "../data";
 import { Layout } from "../layout";
+import { MemberIcon } from "../member-icon";
 import { MemberWorksBrowser } from "../member-works-browser";
 
 export function MemberPage({ id }: { id: string }) {
@@ -18,7 +19,7 @@ export function MemberPage({ id }: { id: string }) {
   return (
     <Layout>
       <section className="member-hero">
-        <img src={withBasePath(member.icon ?? "")} alt={`${member.name}のアイコン`} />
+        <MemberIcon id={member.id} name={member.name} />
         <div>
           <p className="kicker">MEMBER PROFILE</p>
           <h1>{member.name}</h1>
