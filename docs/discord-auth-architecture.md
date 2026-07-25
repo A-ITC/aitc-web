@@ -1,11 +1,19 @@
+# Discord OAuth2 認証アーキテクチャ
+
+ChromeのPlantUML拡張機能で、以下のコードブロックをレンダリングして確認します。
+
+```plantuml
 @startuml
 title AITC Web — Discord OAuth2 認証アーキテクチャ
 
-!include <awslib/AWSCommon.puml>
-!include <awslib/NetworkingContentDelivery/APIGateway.puml>
-!include <awslib/Compute/Lambda.puml>
-!include <awslib/SecurityIdentityCompliance/SecretsManager.puml>
-!include <awslib/Storage/SimpleStorageService.puml>
+' AWS Icons for PlantUML v23.0 を固定参照する。
+' PlantUMLの内蔵 awslib がない環境でも、HTTPSの外部読み込みを許可すれば利用できる。
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v23.0/dist
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/NetworkingContentDelivery/APIGateway.puml
+!include AWSPuml/Compute/Lambda.puml
+!include AWSPuml/SecurityIdentityCompliance/SecretsManager.puml
+!include AWSPuml/Storage/SimpleStorageService.puml
 
 left to right direction
 skinparam shadowing false
@@ -75,3 +83,4 @@ note right of lambda
   - GET /members/{id}
 end note
 @enduml
+```
