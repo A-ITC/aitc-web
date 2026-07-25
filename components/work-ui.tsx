@@ -87,6 +87,20 @@ export function WorkModal({
   }, [onClose]);
   const eventWork =
     kind === "event" ? (work as (typeof eventWorks)[number]) : null;
+  const soundcloudLink =
+    work.type === "Music"
+      ? work.links.find((link) => link.url.includes("soundcloud.com"))
+      : undefined;
+  const soundcloudEmbedUrl = soundcloudLink
+    ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(soundcloudLink.url)}&color=%23f58318&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`
+    : undefined;
+  const bandcampLink =
+    work.type === "Music"
+      ? work.links.find(
+          (link) => link.url.includes("bandcamp.com") && link.embedUrl,
+        )
+      : undefined;
+  const bandcampEmbedUrl = bandcampLink?.embedUrl;
   return (
     <div
       className="overlay"
@@ -135,6 +149,35 @@ export function WorkModal({
             </dd>
           </dl>
           <p className="description">{work.description}</p>
+          {soundcloudEmbedUrl && (
+            <div className="soundcloud-player">
+              <iframe
+                title={`${work.title}のSoundCloudプレーヤー`}
+                width="100%"
+                height="166"
+                scrolling="no"
+                frameBorder="no"
+                allow="autoplay"
+                loading="lazy"
+                src={soundcloudEmbedUrl}
+              />
+            </div>
+          )}
+          {bandcampEmbedUrl && (
+            <div className="bandcamp-player">
+              <iframe
+                title={`${work.title}のBandcampプレーヤー`}
+                width="100%"
+                height="120"
+                scrolling="no"
+                frameBorder="0"
+                loading="lazy"
+                src={bandcampEmbedUrl}
+              >
+                <a href={bandcampLink.url}>{work.title}</a>
+              </iframe>
+            </div>
+          )}
           {work.links.map((link) => (
             <a
               key={link.name}

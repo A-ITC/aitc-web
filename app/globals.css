@@ -9,7 +9,12 @@
     #000 50%,
     #40daf5
   );
-  --header-gradient: linear-gradient(90deg in oklab, #f58318, #000 50%, #40daf5);
+  --header-gradient: linear-gradient(
+    90deg in oklab,
+    #f58318,
+    #000 50%,
+    #40daf5
+  );
   --paper: #f9fbff;
   --line: #dbe4f0;
 }
@@ -513,6 +518,24 @@ select {
   font-size: 14px;
   line-height: 1.8;
   margin: 27px 0;
+}
+.soundcloud-player {
+  margin: 0 0 24px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.soundcloud-player iframe {
+  display: block;
+  border: 0;
+}
+.bandcamp-player {
+  margin: 0 0 24px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.bandcamp-player iframe {
+  display: block;
+  border: 0;
 }
 .external {
   display: inline-block;

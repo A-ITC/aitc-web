@@ -52,7 +52,8 @@
       },
       {
         "name": "bandcamp",
-        "url": "https://aitccreators.bandcamp.com/album/boiled"
+        "url": "https://aitccreators.bandcamp.com/album/boiled",
+        "embedUrl": "https://bandcamp.com/EmbeddedPlayer/v=2/album=3167624746/size=large/tracklist=false/artwork=small/"
       }
     ]
   },
@@ -84,7 +85,7 @@
       },
       {
         "name": "soundcloud",
-        "url": "https://on.soundcloud.com/U20QVWqv4LuuYx9Cij"
+        "url": "https://soundcloud.com/aitc-works/2022m3halloween-crossfade-l-05b?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing"
       }
     ]
   },

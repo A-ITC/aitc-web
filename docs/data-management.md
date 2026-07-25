@@ -64,4 +64,5 @@
 - 作品種別には `Illustration`、`Programming`、`Movie`、`Music`、`Tool`、`Other` を使います。
 - 日付は `YYYY-MM-DD` 形式、年は4桁の数値を使います。
 - 外部リンクを用意しない場合は、`links` を空配列 `[]` にできます。
+- Bandcamp をモーダル内で再生する場合は、Bandcamp の「Share / Embed」から取得したプレーヤーURLを、Bandcampリンクの `embedUrl` に設定します。`embedUrl` がない通常のリンクは、外部リンクとしてのみ表示されます。
 - 新しい画像は `public/images/` に追加します。画像の内容が分かるファイル名と `alt` 用の作品タイトルを用意してください。

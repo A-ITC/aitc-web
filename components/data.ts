@@ -9,7 +9,11 @@ export type WorkType =
   | "Music"
   | "Tool"
   | "Other";
-export type Link = { name: string; url: string };
+export type Link = {
+  name: string;
+  url: string;
+  embedUrl?: string;
+};
 export type Member = {
   id: string;
   name: string;
