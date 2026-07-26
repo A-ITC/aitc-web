@@ -1,86 +1,58 @@
 # Discord OAuth2 認証アーキテクチャ
 
-ChromeのPlantUML拡張機能で、以下のコードブロックをレンダリングして確認します。
+```mermaid
+architecture-beta
+    service user(server)[AITC Member]
 
-```plantuml
-@startuml
-title AITC Web — Discord OAuth2 認証アーキテクチャ
+    group github(cloud)[GitHub]
+    service repo(disk)[Repository] in github
+    service actions(server)[GitHub Actions] in github
+    service pages(internet)[GitHub Pages] in github
 
-' AWS Icons for PlantUML v23.0 を固定参照する。
-' PlantUMLの内蔵 awslib がない環境でも、HTTPSの外部読み込みを許可すれば利用できる。
-!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v23.0/dist
-!include AWSPuml/AWSCommon.puml
-!include AWSPuml/NetworkingContentDelivery/APIGateway.puml
-!include AWSPuml/Compute/Lambda.puml
-!include AWSPuml/SecurityIdentityCompliance/SecretsManager.puml
-!include AWSPuml/Storage/SimpleStorageService.puml
+    group discord(cloud)[Discord]
+    service oauth(server)[Discord OAuth2] in discord
+    service guild(database)[AITC Guild] in discord
 
-left to right direction
-skinparam shadowing false
-skinparam defaultFontName "Noto Sans JP"
-skinparam linetype ortho
+    group aws(cloud)[AWS Cloud]
+    service api(internet)[API Gateway] in aws
+    service lambda(server)[AWS Lambda] in aws
+    service secrets(disk)[Secrets Manager] in aws
+    service member_data(database)[Amazon DynamoDB] in aws
 
-actor "AITCメンバー" as user
-
-rectangle "GitHub" {
-  component "aitc-web リポジトリ\n(公開用ソース)" as repo
-  component "GitHub Actions\n静的サイトをビルド・デプロイ" as actions
-  cloud "GitHub Pages\na-i-t-c.com\n公開ページ・ログインUIのみ" as pages
-}
-
-rectangle "Discord" {
-  component "Discord OAuth2" as oauth
-  database "AITC Discord Server\n(Guild ID)" as guild
-}
-
-frame "AWS" {
-  APIGateway(api, "API Gateway", "api.a-i-t-c.com")
-  Lambda(lambda, "認証・認可 API", "Discord OAuth2 / セッション / メンバーAPI")
-  SecretsManager(secrets, "Secrets Manager", "Discord Client Secret\nSession Signing Secret")
-  SimpleStorageService(memberData, "Amazon S3 (private)", "メンバー情報 JSON")
-}
-
-user --> pages : 1. メンバーページを開く
-pages --> api : 2. GET /auth/session\nCookie を送信
-api --> lambda
-lambda --> api : 未認証 / 非所属
-api --> pages : 401 Unauthorized
-pages --> user : Discordでログイン
-
-user --> oauth : 3. /auth/discord/login から\nDiscordへリダイレクト
-oauth --> api : 4. 認可コードを callback に返却
-api --> lambda
-lambda --> secrets : Client Secret を取得
-lambda --> oauth : 5. 認可コードをトークン交換\n(scope: identify guilds)
-oauth --> lambda : Discordユーザーと所属Guild一覧
-lambda --> guild : 6. AITC Guild ID と照合
-lambda --> api : 7. 署名済み HttpOnly Cookie を発行\nDomain=.a-i-t-c.com / Secure / SameSite=Lax
-api --> pages : 認証済みとして戻る
-
-pages --> api : 8. GET /members または /members/{id}\nCookie を送信
-api --> lambda
-lambda --> memberData : 9. 認可済みの場合のみ読み取り
-lambda --> api : JSON
-api --> pages : メンバー情報
-pages --> user : プロフィール・作品一覧を表示
-
-repo --> actions : push to main
-actions --> pages : 静的アセットをデプロイ
-
-note bottom of pages
-  members.json やプロフィール本文を
-  GitHub Pagesの静的アセットに含めない。
-  公開ページは認証済みAPIから取得した情報だけを表示する。
-end note
-
-note right of lambda
-  Lambda の主なエンドポイント
-  - GET /auth/discord/login
-  - GET /auth/discord/callback
-  - GET /auth/session
-  - POST /auth/logout
-  - GET /members
-  - GET /members/{id}
-end note
-@enduml
+    repo:R --> L:actions
+    actions:R --> L:pages
+    user:R --> L:pages
+    pages:R --> L:api
+    api:B --> T:lambda
+    lambda:L --> R:oauth
+    oauth:B --> T:guild
+    lambda:B --> T:secrets
+    lambda:R --> L:member_data
 ```
+
+## 認証フロー
+
+1. メンバーがGitHub Pages上のメンバーページを開く。
+2. フロントエンドが `GET /auth/session` をAPI Gatewayへ送り、未認証ならDiscordログインへ誘導する。
+3. LambdaがDiscord OAuth2の認可コードを交換し、`identify` と `guilds` スコープで取得したGuild一覧にAITCのGuild IDが含まれるか照合する。
+4. 所属を確認できた場合、Lambdaは署名済みの `HttpOnly` Cookieを発行する。
+5. 認証済みリクエストだけが、Lambdaを経由してDynamoDB上のメンバー情報と個人作品情報を取得できる。
+
+## データ取得と公開範囲
+
+| API | 認証 | 用途 |
+| --- | --- | --- |
+| `GET /event-works` | 不要 | 公開するイベント作品集の一覧・詳細表示 |
+| `GET /members` | Discord OAuth2必須 | メンバー一覧・絞り込み |
+| `GET /members/{id}` | Discord OAuth2必須 | メンバープロフィール |
+| `GET /personal-works` | Discord OAuth2必須 | 個人作品集の一覧・詳細表示 |
+
+フロントエンドはJSONを静的アセットとして含めず、各ページでAPIから一覧を取得して表示します。
+
+メンバープロフィールはGitHub Pagesで静的に生成しません。URLは次のクエリパラメータ形式に統一します。
+
+```text
+/members/profile?id=<member-id>
+```
+
+`id` はDynamoDBのデータに応じて増減しても、同じ静的なプロフィールページからAPIへ渡されます。
