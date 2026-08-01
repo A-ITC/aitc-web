@@ -1,7 +1,3 @@
-import membersData from "@/data/members.json";
-import eventWorksData from "@/data/eventWorks.json";
-import personalWorksData from "@/data/personalWorks.json";
-
 export type WorkType =
   | "Illustration"
   | "Programming"
@@ -9,20 +5,24 @@ export type WorkType =
   | "Music"
   | "Tool"
   | "Other";
+
 export type Link = {
   name: string;
   url: string;
   embedUrl?: string;
 };
+
 export type Member = {
   id: string;
   name: string;
   generation: number;
   department: string[];
+  roles?: string[];
   icon?: string;
   profile?: string;
   links: Link[];
 };
+
 export type EventWork = {
   id: string;
   title: string;
@@ -34,6 +34,7 @@ export type EventWork = {
   year: number;
   links: Link[];
 };
+
 export type PersonalWork = {
   id: string;
   title: string;
@@ -44,27 +45,22 @@ export type PersonalWork = {
   createdAt: string;
   links: Link[];
 };
-const members = membersData as Member[];
-const eventWorks = eventWorksData as EventWork[];
-const personalWorks = personalWorksData as PersonalWork[];
 
-export { members, eventWorks, personalWorks };
 export type Work = EventWork | PersonalWork;
 export type CollectionKind = "event" | "personal";
 
-export const typeLabel: Record<string, string> = {
+export const typeLabel: Record<WorkType, string> = {
   Illustration: "イラスト",
   Programming: "プログラミング",
-  Movie: "映像",
+  Movie: "動画",
   Music: "音楽",
   Tool: "ツール",
   Other: "その他",
 };
 
-export const memberFor = (id: string) =>
-  members.find((member) => member.id === id)!;
-export const displayCreators = (ids: string[]) =>
-  ids.map((id) => memberFor(id).name).join(" / ");
+export const isEventWork = (work: Work): work is EventWork => "event" in work;
 
-export const withBasePath = (path: string) =>
-  `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
+export const withBasePath = (path: string) => {
+  if (/^(https?:)?\/\//.test(path)) return path;
+  return `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
+};

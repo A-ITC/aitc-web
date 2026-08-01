@@ -1,30 +1,7 @@
 import Link from "next/link";
-import { eventWorks, withBasePath } from "../data";
+import { withBasePath } from "../data";
+import { EventTimeline } from "../event-timeline";
 import { Layout, Logo } from "../layout";
-
-function Timeline() {
-  const events = [
-    ...new Map(eventWorks.map((work) => [work.event, work.year])).entries(),
-  ].sort((a, b) => b[1] - a[1]);
-  return (
-    <section className="section timeline">
-      <p className="kicker">EVENT HISTORY</p>
-      <h2>イベント年表</h2>
-      <div>
-        {events.map(([event, year]) => (
-          <Link
-            key={event}
-            href={`/event-works?event=${encodeURIComponent(event)}`}
-          >
-            <b>{year}</b>
-            <span>{event}</span>
-            <i>→</i>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 export function HomePage() {
   return (
@@ -35,7 +12,9 @@ export function HomePage() {
           <h1 className="hero-title">
             <img
               className="hero-icon"
-              src={withBasePath("/images/aitc_logo_transparent_no_word_black.png")}
+              src={withBasePath(
+                "/images/aitc_logo_transparent_no_word_black.png",
+              )}
               alt=""
             />
             <Logo />
@@ -94,7 +73,7 @@ export function HomePage() {
           </Link>
         </div>
       </section>
-      <Timeline />
+      <EventTimeline />
     </Layout>
   );
 }

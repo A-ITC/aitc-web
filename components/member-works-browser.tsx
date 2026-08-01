@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { CollectionKind, Work } from "./data";
+import { CollectionKind, isEventWork, Member, Work } from "./data";
 import { WorkCard, WorkModal } from "./work-ui";
 
-export function MemberWorksBrowser({ works }: { works: Work[] }) {
+export function MemberWorksBrowser({
+  works,
+  members,
+}: {
+  works: Work[];
+  members: Member[];
+}) {
   const [selected, setSelected] = useState<Work | null>(null);
   const kind: CollectionKind =
-    selected && "event" in selected ? "event" : "personal";
+    selected && isEventWork(selected) ? "event" : "personal";
   return (
     <>
       <div className="works-grid">
@@ -16,6 +22,7 @@ export function MemberWorksBrowser({ works }: { works: Work[] }) {
             key={work.id}
             work={work}
             onClick={() => setSelected(work)}
+            members={members}
           />
         ))}
       </div>
@@ -23,6 +30,8 @@ export function MemberWorksBrowser({ works }: { works: Work[] }) {
         <WorkModal
           work={selected}
           kind={kind}
+          works={works}
+          members={members}
           onClose={() => setSelected(null)}
         />
       )}

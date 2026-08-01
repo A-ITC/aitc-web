@@ -1,27 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CollectionKind,
-  eventWorks,
-  memberFor,
-  personalWorks,
+  isEventWork,
+  Member,
+  PersonalWork,
   typeLabel,
   withBasePath,
   Work,
 } from "./data";
+import { fetchWorkDetail } from "@/lib/api";
 
 export function WorkCard({
   work,
   onClick,
+  members,
   showCreator = false,
 }: {
   work: Work;
   onClick: () => void;
+  members: Member[];
   showCreator?: boolean;
 }) {
-  const creators = work.creatorIds.map((id) => memberFor(id).name).join(" / ");
+  const creators = work.creatorIds
+    .map((id) => members.find((member) => member.id === id)?.name ?? id)
+    .join(" / ");
   return (
     <button className="work-card" onClick={onClick}>
       <span className="thumb">
@@ -43,21 +48,42 @@ export function WorkCard({
 export function WorkModal({
   work,
   kind,
+  works,
+  members,
   onClose,
 }: {
   work: Work;
   kind: CollectionKind;
+  works: Work[];
+  members: Member[];
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
-  const source = kind === "event" ? eventWorks : personalWorks;
-  const related = source
+  const [detail, setDetail] = useState(work);
+  const [detailError, setDetailError] = useState(false);
+  const related = works
     .filter(
       (item) =>
         item.id !== work.id &&
         item.creatorIds.some((id) => work.creatorIds.includes(id)),
     )
     .slice(0, 3);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDetail(work);
+    setDetailError(false);
+    fetchWorkDetail(kind, work.id)
+      .then((value) => {
+        if (!cancelled) setDetail(value);
+      })
+      .catch(() => {
+        if (!cancelled) setDetailError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [kind, work]);
   useEffect(() => {
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
@@ -85,18 +111,17 @@ export function WorkModal({
       document.body.style.overflow = "";
     };
   }, [onClose]);
-  const eventWork =
-    kind === "event" ? (work as (typeof eventWorks)[number]) : null;
+  const eventWork = isEventWork(detail) ? detail : null;
   const soundcloudLink =
-    work.type === "Music"
-      ? work.links.find((link) => link.url.includes("soundcloud.com"))
+    detail.type === "Music"
+      ? detail.links.find((link) => link.url.includes("soundcloud.com"))
       : undefined;
   const soundcloudEmbedUrl = soundcloudLink
     ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(soundcloudLink.url)}&color=%23f58318&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`
     : undefined;
   const bandcampLink =
-    work.type === "Music"
-      ? work.links.find(
+    detail.type === "Music"
+      ? detail.links.find(
           (link) => link.url.includes("bandcamp.com") && link.embedUrl,
         )
       : undefined;
@@ -125,19 +150,21 @@ export function WorkModal({
         </button>
         <img
           className="modal-image"
-          src={withBasePath(work.thumbnail)}
-          alt={`${work.title}のサムネイル`}
+          src={withBasePath(detail.thumbnail)}
+          alt={`${detail.title}のサムネイル`}
         />
         <div className="modal-content">
-          <p className="eyebrow">{typeLabel[work.type]}</p>
-          <h2 id="modal-title">{work.title}</h2>
+          <p className="eyebrow">{typeLabel[detail.type]}</p>
+          <h2 id="modal-title">{detail.title}</h2>
           <dl>
             <dt>制作者</dt>
             <dd>
-              {work.creatorIds.map((id, index) => (
+              {detail.creatorIds.map((id, index) => (
                 <span key={id}>
                   {index > 0 && " / "}
-                  <Link href={`/members/${id}`}>{memberFor(id).name}</Link>
+                  <Link href={`/member?id=${encodeURIComponent(id)}`}>
+                    {members.find((member) => member.id === id)?.name ?? id}
+                  </Link>
                 </span>
               ))}
             </dd>
@@ -145,14 +172,17 @@ export function WorkModal({
             <dd>
               {eventWork
                 ? `${eventWork.event} · ${eventWork.year}`
-                : (work as (typeof personalWorks)[number]).createdAt}
+                : (detail as PersonalWork).createdAt}
             </dd>
           </dl>
-          <p className="description">{work.description}</p>
+          {detailError && (
+            <p className="description">詳細データを取得できませんでした。</p>
+          )}
+          <p className="description">{detail.description}</p>
           {soundcloudEmbedUrl && (
             <div className="soundcloud-player">
               <iframe
-                title={`${work.title}のSoundCloudプレーヤー`}
+                title={`${detail.title}のSoundCloudプレーヤー`}
                 width="100%"
                 height="166"
                 scrolling="no"
@@ -166,7 +196,7 @@ export function WorkModal({
           {bandcampEmbedUrl && (
             <div className="bandcamp-player">
               <iframe
-                title={`${work.title}のBandcampプレーヤー`}
+                title={`${detail.title}のBandcampプレーヤー`}
                 width="100%"
                 height="120"
                 scrolling="no"
@@ -174,11 +204,11 @@ export function WorkModal({
                 loading="lazy"
                 src={bandcampEmbedUrl}
               >
-                <a href={bandcampLink.url}>{work.title}</a>
+                <a href={bandcampLink.url}>{detail.title}</a>
               </iframe>
             </div>
           )}
-          {work.links.map((link) => (
+          {detail.links.map((link) => (
             <a
               key={link.name}
               className="external"
