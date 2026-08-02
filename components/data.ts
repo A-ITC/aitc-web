@@ -3,6 +3,7 @@ export type WorkType =
   | "Programming"
   | "Movie"
   | "Music"
+  | "MusicAndIllustration"
   | "Tool"
   | "Other";
 
@@ -23,6 +24,15 @@ export type Member = {
   links: Link[];
 };
 
+export type EventCredit = {
+  id: string;
+  trackNumber: number | string;
+  creatorIds: string[];
+  workTitle?: string;
+  role?: string;
+  isMeta?: boolean;
+};
+
 export type EventWork = {
   id: string;
   title: string;
@@ -33,6 +43,7 @@ export type EventWork = {
   event: string;
   year: number;
   links: Link[];
+  credits?: EventCredit[];
 };
 
 export type PersonalWork = {
@@ -54,6 +65,7 @@ export const typeLabel: Record<WorkType, string> = {
   Programming: "プログラミング",
   Movie: "動画",
   Music: "音楽",
+  MusicAndIllustration: "音楽+イラスト",
   Tool: "ツール",
   Other: "その他",
 };

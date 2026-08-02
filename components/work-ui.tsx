@@ -126,6 +126,13 @@ export function WorkModal({
         )
       : undefined;
   const bandcampEmbedUrl = bandcampLink?.embedUrl;
+  const credits = eventWork?.credits ?? [];
+  const trackCredits = credits.filter(
+    (credit) => Number(credit.trackNumber) !== 0,
+  );
+  const metaCredits = credits.filter(
+    (credit) => Number(credit.trackNumber) === 0,
+  );
   return (
     <div
       className="overlay"
@@ -157,17 +164,6 @@ export function WorkModal({
           <p className="eyebrow">{typeLabel[detail.type]}</p>
           <h2 id="modal-title">{detail.title}</h2>
           <dl>
-            <dt>制作者</dt>
-            <dd>
-              {detail.creatorIds.map((id, index) => (
-                <span key={id}>
-                  {index > 0 && " / "}
-                  <Link href={`/member?id=${encodeURIComponent(id)}`}>
-                    {members.find((member) => member.id === id)?.name ?? id}
-                  </Link>
-                </span>
-              ))}
-            </dd>
             <dt>{kind === "event" ? "イベント" : "制作日"}</dt>
             <dd>
               {eventWork
@@ -179,6 +175,66 @@ export function WorkModal({
             <p className="description">詳細データを取得できませんでした。</p>
           )}
           <p className="description">{detail.description}</p>
+          {eventWork && trackCredits.length > 0 && (
+            <section className="credit-list" aria-labelledby="credit-list-title">
+              <h3 id="credit-list-title">収録作品</h3>
+              <div className="credit-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">トラック</th>
+                      <th scope="col">作者</th>
+                      <th scope="col">作品名</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trackCredits.map((credit) => (
+                      <tr key={credit.id}>
+                        <td>{credit.trackNumber}</td>
+                        <td>
+                          {credit.creatorIds.map((id, index) => (
+                            <span key={id}>
+                              {index > 0 && " / "}
+                              <Link href={`/member?id=${encodeURIComponent(id)}`}>
+                                {members.find((member) => member.id === id)?.name ?? id}
+                              </Link>
+                            </span>
+                          ))}
+                        </td>
+                        <td>{credit.workTitle ?? credit.role ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+          {eventWork && metaCredits.length > 0 && (
+            <section className="credit-list" aria-labelledby="meta-credit-list-title">
+              <h3 id="meta-credit-list-title">制作協力</h3>
+              <div className="credit-table-wrap">
+                <table className="meta-credit-table">
+                  <tbody>
+                    {metaCredits.map((credit) => (
+                      <tr key={credit.id}>
+                        <td>
+                          {credit.creatorIds.map((id, index) => (
+                            <span key={id}>
+                              {index > 0 && " / "}
+                              <Link href={`/member?id=${encodeURIComponent(id)}`}>
+                                {members.find((member) => member.id === id)?.name ?? id}
+                              </Link>
+                            </span>
+                          ))}
+                        </td>
+                        <td>{credit.workTitle ?? credit.role ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
           {soundcloudEmbedUrl && (
             <div className="soundcloud-player">
               <iframe

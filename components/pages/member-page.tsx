@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import {
-  fetchEventWorks,
   fetchMember,
   fetchMembers,
-  fetchPersonalWorks,
+  fetchMemberWorks,
 } from "@/lib/api";
 import { Member, Work } from "../data";
 import { Layout } from "../layout";
@@ -25,18 +24,13 @@ export function MemberPage({ id }: { id: string }) {
     Promise.all([
       fetchMember(id),
       fetchMembers(),
-      fetchEventWorks(),
-      fetchPersonalWorks(),
+      fetchMemberWorks(id),
     ])
-      .then(([profile, directory, eventWorks, personalWorks]) => {
+      .then(([profile, directory, memberWorks]) => {
         if (cancelled) return;
         setMember(profile);
         setMembers(directory);
-        setWorks(
-          [...personalWorks, ...eventWorks].filter((work) =>
-            work.creatorIds.includes(id),
-          ),
-        );
+        setWorks(memberWorks);
       })
       .catch(() => {
         if (!cancelled) setError(true);

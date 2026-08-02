@@ -61,7 +61,7 @@ select {
   padding: 0 24px;
   margin: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
 }
 .brand {
@@ -455,6 +455,7 @@ select {
 .modal {
   position: relative;
   width: min(780px, 100%);
+  margin-block: auto;
   background: #fff;
   box-shadow: 0 30px 80px #0007;
   animation: rise 0.2s ease-out;
@@ -518,6 +519,47 @@ select {
   font-size: 14px;
   line-height: 1.8;
   margin: 27px 0;
+}
+.credit-list {
+  margin: 27px 0;
+}
+.credit-list h3 {
+  font-size: 15px;
+  margin: 0 0 10px;
+}
+.credit-table-wrap {
+  overflow-x: auto;
+}
+.credit-list table {
+  width: 100%;
+  min-width: 440px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.credit-list th,
+.credit-list td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.credit-list th {
+  color: #718096;
+  font-weight: 700;
+}
+.credit-list td:first-child {
+  width: 84px;
+  font-variant-numeric: tabular-nums;
+}
+.credit-list td:nth-child(2) {
+  width: 35%;
+}
+.credit-list td a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.meta-credit-table td:first-child {
+  width: 35%;
 }
 .soundcloud-player {
   margin: 0 0 24px;
