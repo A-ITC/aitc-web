@@ -8,7 +8,7 @@ import type {
 
 const apiBaseUrl = (
   process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "https://fnpj4r2q5f.execute-api.ap-northeast-1.amazonaws.com"
+  "https://uvhug6af4a.execute-api.ap-northeast-1.amazonaws.com"
 ).replace(/\/$/, "");
 
 const workThumbnailBaseUrl = (
