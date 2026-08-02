@@ -12,16 +12,15 @@
   "name": "Alice",
   "generation": 12,
   "department": ["CG", "MV"],
-  "icon": "/images/member-alice.svg",
   "profile": "自己紹介文",
   "links": [{ "name": "Portfolio", "url": "https://example.com" }]
 }
 ```
 
 - `id` は英小文字・数字・ハイフンで一意にします。プロフィールURLと作品の作者指定に使われます。
+- メンバーアイコンは `id` からCloudFrontの `user-icon/<id>_icon.png` を参照します。取得に失敗した場合は、サイト内の共通アイコン `public/images/memberIcons/member-alice.svg` を表示します。
 - `generation` は数値です。画面では「12期生」のように表示されます。
 - `department` は `CG`、`DTM`、`PROG`、`MV` の配列です。複数の部門に所属する場合は、すべて指定します。
-- `icon` は `public/` を除いた画像パスです。
 
 ## イベント作品
 

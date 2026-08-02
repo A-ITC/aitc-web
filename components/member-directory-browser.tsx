@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { members, withBasePath } from "./data";
+import { useEffect, useState } from "react";
+import { fetchMembers } from "@/lib/api";
+import { Member } from "./data";
+import { MemberIcon } from "./member-icon";
 import styles from "./members.module.css";
 
 export function MemberDirectoryBrowser() {
@@ -11,6 +14,25 @@ export function MemberDirectoryBrowser() {
   const pathname = usePathname();
   const params = useSearchParams();
   const reduceMotion = useReducedMotion();
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetchMembers()
+      .then((items) => {
+        if (!cancelled) setMembers(items);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const generations = [
     ...new Set(members.map((member) => member.generation)),
   ].sort((a, b) => a - b);
@@ -38,6 +60,12 @@ export function MemberDirectoryBrowser() {
       (generation === "all" || member.generation === Number(generation)) &&
       (department === "all" || member.department.includes(department)),
   );
+
+  if (loading) return <section className={styles.main}>読み込み中…</section>;
+  if (error)
+    return (
+      <section className={styles.main}>データを取得できませんでした。</section>
+    );
 
   return (
     <section className={styles.main}>
@@ -90,8 +118,11 @@ export function MemberDirectoryBrowser() {
                     }
               }
             >
-              <Link href={`/members/${member.id}`} className={styles.card}>
-                <img src={withBasePath(member.icon ?? "")} alt={`${member.name}のアイコン`} />
+              <Link
+                href={`/member?id=${encodeURIComponent(member.id)}`}
+                className={styles.card}
+              >
+                <MemberIcon id={member.id} name={member.name} />
                 <div>
                   <p className="eyebrow">
                     {member.department.join(" / ")} · 第{member.generation}期

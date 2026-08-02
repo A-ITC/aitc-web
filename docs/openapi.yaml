@@ -1,0 +1,464 @@
+openapi: 3.0.3
+info:
+  title: AITC Web API
+  version: 1.0.0
+  description: |
+    AITC Web の作品・メンバー情報を提供するAPIです。
+
+    イベント作品は公開します。メンバー情報と個人作品は、Discord OAuth2で
+    AITC Discordサーバーへの所属を確認できたユーザーだけが取得できます。
+servers:
+  - url: https://api.a-i-t-c.com
+    description: Production
+tags:
+  - name: Auth
+  - name: EventWorks
+  - name: Members
+  - name: PersonalWorks
+paths:
+  /auth/discord/login:
+    get:
+      tags: [Auth]
+      summary: Discordログインを開始する
+      description: Discord OAuth2の認可画面へリダイレクトします。
+      responses:
+        "302":
+          description: Discord OAuth2認可画面へのリダイレクト
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+
+  /auth/discord/callback:
+    get:
+      tags: [Auth]
+      summary: Discord OAuth2コールバックを処理する
+      parameters:
+        - $ref: "#/components/parameters/OAuthCode"
+        - $ref: "#/components/parameters/OAuthState"
+      responses:
+        "302":
+          description: 認証結果に応じたフロントエンドへのリダイレクト
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+            Set-Cookie:
+              description: 認証成功時に発行するSecure・HttpOnlyなセッションCookie
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /auth/session:
+    get:
+      tags: [Auth]
+      summary: 現在の認証状態を取得する
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: 認証済み
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: ログアウトする
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: セッションCookieを削除しました
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: aitc_session=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /event-works:
+    get:
+      tags: [EventWorks]
+      summary: イベント作品一覧を取得する
+      description: 認証不要で閲覧できる公開APIです。
+      parameters:
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/WorkType"
+        - $ref: "#/components/parameters/Sort"
+      responses:
+        "200":
+          description: イベント作品一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EventWork"
+
+  /members:
+    get:
+      tags: [Members]
+      summary: メンバー一覧を取得する
+      parameters:
+        - $ref: "#/components/parameters/Generation"
+        - $ref: "#/components/parameters/Department"
+      responses:
+        "200":
+          description: メンバー一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Member"
+  /members/{id}:
+    get:
+      tags: [Members]
+      summary: メンバー詳細を取得する
+      parameters:
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: メンバー詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /personal-works:
+    get:
+      tags: [PersonalWorks]
+      summary: 個人作品一覧を取得する
+      parameters:
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/WorkType"
+        - $ref: "#/components/parameters/CreatorId"
+        - $ref: "#/components/parameters/Sort"
+      responses:
+        "200":
+          description: 個人作品一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PersonalWork"
+
+  /event-works/{id}:
+    get:
+      tags: [EventWorks]
+      summary: イベント作品詳細を取得する
+      parameters:
+        - $ref: "#/components/parameters/WorkId"
+      responses:
+        "200":
+          description: イベント作品詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventWork"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /personal-works/{id}:
+    get:
+      tags: [PersonalWorks]
+      summary: 個人作品詳細を取得する
+      parameters:
+        - $ref: "#/components/parameters/WorkId"
+      responses:
+        "200":
+          description: 個人作品詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalWork"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: aitc_session
+
+  parameters:
+    OAuthCode:
+      name: code
+      in: query
+      required: true
+      schema:
+        type: string
+    OAuthState:
+      name: state
+      in: query
+      required: true
+      schema:
+        type: string
+    MemberId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: akatsuki
+    WorkId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: aitc_1
+    CreatorId:
+      name: creatorId
+      in: query
+      schema:
+        type: string
+        example: akatsuki
+    Year:
+      name: year
+      in: query
+      schema:
+        type: integer
+        minimum: 2000
+        example: 2025
+    Generation:
+      name: generation
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        example: 12
+    Department:
+      name: department
+      in: query
+      schema:
+        $ref: "#/components/schemas/Department"
+    WorkType:
+      name: type
+      in: query
+      schema:
+        $ref: "#/components/schemas/WorkType"
+    Sort:
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: [newest, oldest, title]
+        default: newest
+
+  responses:
+    BadRequest:
+      description: リクエストが不正です
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: 認証が必要です
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: AITC Discordサーバーへの所属を確認できません
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: 指定されたリソースは存在しません
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Session:
+      type: object
+      required: [authenticated, user]
+      properties:
+        authenticated:
+          type: boolean
+          example: true
+        user:
+          type: object
+          required: [id, username]
+          properties:
+            id:
+              type: string
+              description: Discord User ID
+              example: "123456789012345678"
+            username:
+              type: string
+              example: aitc_member
+
+    Member:
+      type: object
+      required: [id, name, generation, department, links]
+      properties:
+        id:
+          type: string
+          example: akatsuki
+        name:
+          type: string
+          example: 赤月
+        generation:
+          type: integer
+          example: 12
+        department:
+          type: array
+          items:
+            $ref: "#/components/schemas/Department"
+          example: [CG, MV]
+        icon:
+          type: string
+          format: uri
+          example: https://d1tie8g2r03vuj.cloudfront.net/user-icon/akatsuki_icon.png
+        profile:
+          type: string
+          example: イラストと映像を制作しています。
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+
+    EventWork:
+      type: object
+      required:
+        - id
+        - title
+        - thumbnail
+        - type
+        - description
+        - creatorIds
+        - event
+        - year
+        - links
+      properties:
+        id:
+          type: string
+          example: e6
+        title:
+          type: string
+          example: AITC Calendar
+        thumbnail:
+          type: string
+          format: uri-reference
+          example: /images/eventWorks/AITC_calendar.png
+        type:
+          $ref: "#/components/schemas/WorkType"
+        description:
+          type: string
+        creatorIds:
+          type: array
+          items:
+            type: string
+        creators:
+          description: 公開表示用の作者名。メンバーAPIを呼ばずにイベント作品を表示するために返します。
+          type: array
+          items:
+            $ref: "#/components/schemas/CreatorSummary"
+        event:
+          type: string
+          example: COMITIA 153
+        year:
+          type: integer
+          example: 2025
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+
+    PersonalWork:
+      type: object
+      required:
+        [id, title, thumbnail, creatorIds, type, description, createdAt, links]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        thumbnail:
+          type: string
+          format: uri-reference
+        creatorIds:
+          type: array
+          items:
+            type: string
+        type:
+          $ref: "#/components/schemas/WorkType"
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+
+    CreatorSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    Link:
+      type: object
+      required: [name, url]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        embedUrl:
+          type: string
+          format: uri
+          description: SoundCloudまたはBandcampの埋め込みURL
+
+    Department:
+      type: string
+      enum: [CG, DTM, PROG, MV]
+
+    WorkType:
+      type: string
+      enum: [Illustration, Programming, Movie, Music, Tool, Other]
+
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: Authentication is required.
