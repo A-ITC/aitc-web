@@ -19,14 +19,6 @@ export function HomePage() {
             />
             <Logo />
           </h1>
-          <Link className="primary" href="/event-works">
-            作品を見る <span>→</span>
-          </Link>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="orb orb-one" />
-          <div className="orb orb-two" />
-          <div className="grid-spark">✦</div>
         </div>
       </section>
       <section className="intro section">
@@ -60,13 +52,11 @@ export function HomePage() {
         <h2>作品集</h2>
         <div className="collection-links">
           <Link href="/event-works" className="collection event">
-            <span>01</span>
             <h3>イベント作品集</h3>
             <p>イベントで頒布した、みんなの作品。</p>
             <b>見る →</b>
           </Link>
           <Link href="/personal-works" className="collection personal">
-            <span>02</span>
             <h3>個人作品集</h3>
             <p>メンバーそれぞれの、日々の制作。</p>
             <b>見る →</b>
