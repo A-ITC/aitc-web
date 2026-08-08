@@ -15,6 +15,9 @@ export function MemberDirectoryBrowser() {
   const params = useSearchParams();
   const reduceMotion = useReducedMotion();
   const [members, setMembers] = useState<Member[]>([]);
+  const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
+    new Set(),
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -53,6 +56,7 @@ export function MemberDirectoryBrowser() {
     const next = new URLSearchParams(params.toString());
     if (value === "all") next.delete(key);
     else next.set(key, value);
+    setCollapsedGenerations(new Set());
     router.push(`${pathname}${next.size ? `?${next}` : ""}`, { scroll: false });
   };
   const visible = members.filter(
@@ -60,6 +64,21 @@ export function MemberDirectoryBrowser() {
       (generation === "all" || member.generation === Number(generation)) &&
       (department === "all" || member.department.includes(department)),
   );
+  const memberGroups = generations
+    .map((value) => ({
+      generation: value,
+      members: visible.filter((member) => member.generation === value),
+    }))
+    .filter((group) => group.members.length > 0)
+    .sort((a, b) => b.generation - a.generation);
+  const toggleGeneration = (value: number) => {
+    setCollapsedGenerations((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
 
   if (loading) return <section className={styles.main}>読み込み中…</section>;
   if (error)
@@ -100,42 +119,105 @@ export function MemberDirectoryBrowser() {
         </label>
       </div>
       <p className="count">{visible.length} members</p>
-      <div className={styles.grid} style={{ position: "relative" }}>
-        <AnimatePresence mode="popLayout">
-          {visible.map((member) => (
-            <motion.div
-              key={member.id}
-              layout
-              initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      duration: 0.16,
-                      layout: { duration: 0.25, ease: "easeOut" },
-                    }
-              }
-            >
-              <Link
-                href={`/member?id=${encodeURIComponent(member.id)}`}
-                className={styles.card}
-              >
-                <MemberIcon id={member.id} name={member.name} />
-                <div>
-                  <p className="eyebrow">
-                    {member.department.join(" / ")} · 第{member.generation}期
-                  </p>
-                  <h2>{member.name}</h2>
-                  <p className={styles.description}>{member.profile}</p>
-                  <span className={styles.cta}>プロフィールを見る →</span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      {memberGroups.length === 0 ? (
+        <p className={styles.empty}>該当するメンバーはいません。</p>
+      ) : (
+        <div className={styles.groups}>
+          {memberGroups.map((group) => {
+            const isExpanded = !collapsedGenerations.has(group.generation);
+            const contentId = `generation-${group.generation}-members`;
+
+            return (
+              <section className={styles.group} key={group.generation}>
+                <h2 className={styles.groupHeading}>
+                  <button
+                    type="button"
+                    className={styles.groupToggle}
+                    aria-expanded={isExpanded}
+                    aria-controls={contentId}
+                    onClick={() => toggleGeneration(group.generation)}
+                  >
+                    <span>
+                      {group.generation}期生 ({group.members.length})
+                    </span>
+                    <span className={styles.chevron} aria-hidden="true">
+                      ↓
+                    </span>
+                  </button>
+                </h2>
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      id={contentId}
+                      className={styles.groupContent}
+                      initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={
+                        reduceMotion
+                          ? { duration: 0 }
+                          : { duration: 0.2, ease: "easeOut" }
+                      }
+                    >
+                      <div
+                        className={styles.grid}
+                        style={{ position: "relative" }}
+                      >
+                        <AnimatePresence mode="popLayout">
+                          {group.members.map((member) => (
+                            <motion.div
+                              key={member.id}
+                              layout
+                              initial={
+                                reduceMotion
+                                  ? false
+                                  : { opacity: 0, scale: 0.96 }
+                              }
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.96 }}
+                              transition={
+                                reduceMotion
+                                  ? { duration: 0 }
+                                  : {
+                                      duration: 0.16,
+                                      layout: {
+                                        duration: 0.25,
+                                        ease: "easeOut",
+                                      },
+                                    }
+                              }
+                            >
+                              <Link
+                                href={`/member?id=${encodeURIComponent(member.id)}`}
+                                className={styles.card}
+                              >
+                                <MemberIcon id={member.id} name={member.name} />
+                                <div>
+                                  <p className="eyebrow">
+                                    {member.department.join(" / ")} · 第
+                                    {member.generation}期
+                                  </p>
+                                  <h3>{member.name}</h3>
+                                  <p className={styles.description}>
+                                    {member.profile}
+                                  </p>
+                                  <span className={styles.cta}>
+                                    プロフィールを見る →
+                                  </span>
+                                </div>
+                              </Link>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

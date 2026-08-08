@@ -3,6 +3,64 @@
   margin: auto;
   padding: 52px 24px 110px;
 }
+.groups {
+  display: grid;
+  gap: 38px;
+}
+.group {
+  min-width: 0;
+}
+.groupHeading {
+  margin: 0 0 18px;
+}
+.groupToggle {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #dbe4f0;
+  background: transparent;
+  color: var(--ink);
+  padding: 0 2px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font: inherit;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.groupToggle:hover {
+  color: var(--blue);
+  border-color: #90b1f3;
+}
+.groupToggle:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 4px;
+}
+.chevron {
+  flex: 0 0 auto;
+  color: var(--blue);
+  font-size: 24px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+.groupToggle[aria-expanded="false"] .chevron {
+  transform: rotate(-90deg);
+}
+.groupContent {
+  overflow: hidden;
+}
+.empty {
+  margin: 0;
+  padding: 36px 24px;
+  border: 1px solid #dbe4f0;
+  background: #fff;
+  color: #596b80;
+  text-align: center;
+}
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -31,7 +89,8 @@
   border-radius: 50%;
   background: #dfe9f7;
 }
-.card h2 {
+.card h2,
+.card h3 {
   font-size: 25px;
   letter-spacing: -0.06em;
   margin: 5px 0 10px;
@@ -74,6 +133,12 @@
   background: var(--accent-gradient);
   color: #fff;
   border-color: var(--blue);
+}
+@media (prefers-reduced-motion: reduce) {
+  .groupToggle,
+  .chevron {
+    transition: none;
+  }
 }
 @media (max-width: 767px) {
   .grid {
