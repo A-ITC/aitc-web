@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { withBasePath } from "../data";
 import { EventTimeline } from "../event-timeline";
-import { Layout, Logo } from "../layout";
+import { Layout } from "../layout";
+import { Logo } from "../common/logo";
 
 export function HomePage() {
   return (

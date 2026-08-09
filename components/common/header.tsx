@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Logo } from "./logo";
-import { withBasePath } from "./data";
+import { withBasePath } from "../data";
 
 export function Header() {
   const [open, setOpen] = useState(false);
