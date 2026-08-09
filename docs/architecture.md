@@ -12,16 +12,15 @@ app/                         Next.jsのルーティングと共通スタイル
 ├── event-works/page.tsx     イベント作品集 (`/event-works`)
 ├── personal-works/page.tsx  個人作品集 (`/personal-works`)
 └── members/
-    ├── page.tsx             メンバー一覧 (`/members`)
-    └── [id]/page.tsx        メンバープロフィール (`/members/:id`)
+    └── page.tsx             メンバー一覧 (`/members`)
 
 components/                  表示コンポーネント
-├── layout.tsx               Server ComponentのFooter、Layout、ロゴ
-├── header.tsx               Client Componentのモバイルメニュー
+├── layout.tsx               Server ComponentのLayout
 ├── work-ui.tsx              Client Componentの作品カードと詳細モーダル
 ├── data.ts                  JSONデータの読込と共通型・補助関数
 ├── members.module.css       メンバー一覧専用スタイル
 ├── site.tsx                 ページコンポーネントの再エクスポート
+├── common/                  各ページ共通で使うコンポーネント (Footer, Header, ロゴ)
 └── pages/
     ├── home-page.tsx        トップページの内容
     ├── collection-page.tsx  イベント・個人作品集の共通ページ
@@ -37,8 +36,7 @@ docs/                        開発ドキュメント
 
 | ファイル                                  | 責務                                                                                                     |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `components/layout.tsx`                   | Server Componentの共通レイアウト、フッター、AITCロゴ                                                     |
-| `components/header.tsx`                   | モバイルメニューだけを担当するClient Component                                                           |
+| `components/layout.tsx`                   | Server Componentの共通レイアウト                                                                          |
 | `components/work-ui.tsx`                  | `WorkCard` と `WorkModal`。モーダルのEscキー・背景クリック・フォーカストラップも担当するClient Component |
 | `components/data.ts`                      | JSONの集約、`Work`・`CollectionKind`型、作品種別ラベル、メンバー参照関数                                 |
 | `components/pages/collection-page.tsx`    | Server Componentの作品集ページシェル                                                                     |
@@ -47,6 +45,9 @@ docs/                        開発ドキュメント
 | `components/member-directory-browser.tsx` | URLクエリを正として加入期・所属部門フィルタを扱うClient Component                                        |
 | `components/pages/member-page.tsx`        | Server Componentのメンバー詳細                                                                           |
 | `components/member-works-browser.tsx`     | メンバー作品のモーダル表示だけを担当するClient Component                                                 |
+| `components/common/header.tsx`            | ヘッダーのClient Component                                                                   |
+| `components/common/footer.tsx`            | フッターのClient Component                                                                   |
+| `components/common/logo.tsx`              | AITCのロゴのClient Component                                                                   |
 
 ## ページとデータの関係
 
@@ -68,12 +69,6 @@ flowchart TD
 作品集とメンバー一覧のフィルタは、URLクエリを正とします。たとえば、作品集は `?year=2026&sort=title`、メンバー一覧は `?generation=12&department=CG` のように表します。これによりURL共有とブラウザの戻る・進む操作に対応します。
 
 フィルタ、並び替え、モーダル、モバイルメニューだけをClient Componentに分離しています。共通レイアウト、ページ見出し、プロフィールなどの静的部分はServer Componentとしてレンダリングされます。
-
-## データを更新する方法
-
-データの追加・更新は `data/` 内のJSONを編集します。画像は `public/images/` に置き、JSONの `thumbnail` または `icon` に `/images/ファイル名.svg` の形式で指定します。
-
-詳細なフィールド定義と追加例は [data-management.md](./data-management.md) を参照してください。
 
 ## 開発と公開
 

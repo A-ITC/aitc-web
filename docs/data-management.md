@@ -1,7 +1,5 @@
 # データ管理ガイド
 
-作品・メンバーの情報は、管理画面を使わずJSONファイルで更新します。JSONはカンマやダブルクォートの不足で読み込めなくなるため、編集後は必ず `npm run build` を実行してください。
-
 ## メンバー
 
 対象ファイル：`data/members.json`
@@ -59,9 +57,7 @@
 
 ## 共通ルール
 
-- `creatorIds` は必ず `members.json` に存在する `id` を指定します。
 - 作品種別には `Illustration`、`Programming`、`Movie`、`Music`、`Tool`、`Other` を使います。
 - 日付は `YYYY-MM-DD` 形式、年は4桁の数値を使います。
 - 外部リンクを用意しない場合は、`links` を空配列 `[]` にできます。
 - Bandcamp をモーダル内で再生する場合は、Bandcamp の「Share / Embed」から取得したプレーヤーURLを、Bandcampリンクの `embedUrl` に設定します。`embedUrl` がない通常のリンクは、外部リンクとしてのみ表示されます。
-- 新しい画像は `public/images/` に追加します。画像の内容が分かるファイル名と `alt` 用の作品タイトルを用意してください。
