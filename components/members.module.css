@@ -15,24 +15,24 @@
 }
 .groupToggle {
   width: 100%;
-  border: 0;
-  border-bottom: 1px solid #dbe4f0;
-  background: transparent;
+  border: 1px solid #dbe4f0;
+  background: #f1f3f6;
   color: var(--ink);
-  padding: 0 2px 14px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   font: inherit;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(19px, 2.2vw, 26px);
   font-weight: 700;
   letter-spacing: -0.06em;
   text-align: left;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background-color 0.2s;
 }
 .groupToggle:hover {
+  background: #e9eef5;
   color: var(--blue);
   border-color: #90b1f3;
 }
@@ -43,7 +43,7 @@
 .chevron {
   flex: 0 0 auto;
   color: var(--blue);
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
   transition: transform 0.2s ease;
 }
