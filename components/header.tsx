@@ -48,6 +48,9 @@ export function Header() {
           <Link href="/members" onClick={close}>
             メンバー
           </Link>
+          <Link href="/members-only" onClick={close}>
+            部員向け
+          </Link>
           <a
             className="x-placeholder"
             href="https://x.com/AInfTechClub"
