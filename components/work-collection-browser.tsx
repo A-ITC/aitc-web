@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { fetchEventWorks, fetchMembers, fetchPersonalWorks } from "@/lib/api";
 import {
   CollectionKind,
-  eventWorks,
-  members,
-  personalWorks,
+  EventWork,
+  Member,
+  PersonalWork,
   typeLabel,
   Work,
 } from "./data";
@@ -22,19 +23,49 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
   const searchParams = useSearchParams();
   const reduceMotion = useReducedMotion();
   const [selected, setSelected] = useState<Work | null>(null);
-  const source = kind === "event" ? eventWorks : personalWorks;
+  const [works, setWorks] = useState<Work[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    Promise.all([
+      kind === "event" ? fetchEventWorks() : fetchPersonalWorks(),
+      fetchMembers(),
+    ])
+      .then(([nextWorks, nextMembers]) => {
+        if (cancelled) return;
+        setWorks(nextWorks);
+        setMembers(nextMembers);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [kind]);
+
+  const eventWorks = works as EventWork[];
+  const personalWorks = works as PersonalWork[];
   const years = [
     ...new Set(
-      source.map((work) =>
+      works.map((work) =>
         kind === "event"
-          ? String((work as (typeof eventWorks)[number]).year)
-          : (work as (typeof personalWorks)[number]).createdAt.slice(0, 4),
+          ? String((work as EventWork).year)
+          : (work as PersonalWork).createdAt.slice(0, 4),
       ),
     ),
   ].sort((a, b) => Number(b) - Number(a));
   const events =
     kind === "event" ? [...new Set(eventWorks.map((work) => work.event))] : [];
-  const types = [...new Set(source.map((work) => work.type))].sort();
+  const types = [...new Set(works.map((work) => work.type))].sort();
 
   const year = valid(searchParams.get("year"), years);
   const author = valid(
@@ -50,40 +81,48 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
     value: string,
   ) => {
     const next = new URLSearchParams(searchParams.toString());
-    if (value === "all" || (key === "sort" && value === "new")) {
+    if (value === "all" || (key === "sort" && value === "new"))
       next.delete(key);
-    } else {
-      next.set(key, value);
-    }
+    else next.set(key, value);
     router.push(`${pathname}${next.size ? `?${next}` : ""}`, { scroll: false });
   };
-  const works = useMemo(
+
+  const visibleWorks = useMemo(
     () =>
-      [...source]
+      [...works]
         .filter((work) => {
           const workYear =
             kind === "event"
-              ? String((work as (typeof eventWorks)[number]).year)
-              : (work as (typeof personalWorks)[number]).createdAt.slice(0, 4);
+              ? String((work as EventWork).year)
+              : (work as PersonalWork).createdAt.slice(0, 4);
           return (
             (year === "all" || workYear === year) &&
             (author === "all" || work.creatorIds.includes(author)) &&
             (type === "all" || work.type === type) &&
             (eventName === "all" ||
-              (kind === "event" &&
-                (work as (typeof eventWorks)[number]).event === eventName))
+              (kind === "event" && (work as EventWork).event === eventName))
           );
         })
         .sort((a, b) => {
           if (sort === "title") return a.title.localeCompare(b.title, "ja");
           const date = (work: Work) =>
             kind === "event"
-              ? (work as (typeof eventWorks)[number]).year
-              : Date.parse((work as (typeof personalWorks)[number]).createdAt);
+              ? (work as EventWork).year
+              : Date.parse((work as PersonalWork).createdAt);
           return sort === "old" ? date(a) - date(b) : date(b) - date(a);
         }),
-    [author, eventName, kind, sort, source, type, year],
+    [author, eventName, kind, sort, type, works, year],
   );
+
+  if (loading)
+    return <section className="collection-main">読み込み中…</section>;
+  if (error)
+    return (
+      <section className="collection-main">
+        データを取得できませんでした。
+      </section>
+    );
+
   return (
     <section className="collection-main">
       <div className="filters">
@@ -148,7 +187,7 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
           </select>
         </label>
         <label>
-          並び替え
+          並び順
           <select
             value={sort}
             onChange={(e) => setFilter("sort", e.target.value)}
@@ -159,10 +198,10 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
           </select>
         </label>
       </div>
-      <p className="count">{works.length} works</p>
+      <p className="count">{visibleWorks.length} works</p>
       <div className="works-grid" style={{ position: "relative" }}>
         <AnimatePresence mode="popLayout">
-          {works.map((work) => (
+          {visibleWorks.map((work) => (
             <motion.div
               key={work.id}
               layout
@@ -180,6 +219,7 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
             >
               <WorkCard
                 work={work}
+                members={members}
                 onClick={() => setSelected(work)}
                 showCreator={kind === "personal"}
               />
@@ -191,6 +231,8 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
         <WorkModal
           work={selected}
           kind={kind}
+          works={works}
+          members={members}
           onClose={() => setSelected(null)}
         />
       )}

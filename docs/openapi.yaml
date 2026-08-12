@@ -22,7 +22,7 @@ paths:
       summary: Discordログインを開始する
       description: Discord OAuth2の認可画面へリダイレクトします。
       responses:
-        '302':
+        "302":
           description: Discord OAuth2認可画面へのリダイレクト
           headers:
             Location:
@@ -35,10 +35,10 @@ paths:
       tags: [Auth]
       summary: Discord OAuth2コールバックを処理する
       parameters:
-        - $ref: '#/components/parameters/OAuthCode'
-        - $ref: '#/components/parameters/OAuthState'
+        - $ref: "#/components/parameters/OAuthCode"
+        - $ref: "#/components/parameters/OAuthState"
       responses:
-        '302':
+        "302":
           description: 認証結果に応じたフロントエンドへのリダイレクト
           headers:
             Location:
@@ -49,10 +49,10 @@ paths:
               description: 認証成功時に発行するSecure・HttpOnlyなセッションCookie
               schema:
                 type: string
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /auth/session:
     get:
@@ -61,14 +61,14 @@ paths:
       security:
         - sessionCookie: []
       responses:
-        '200':
+        "200":
           description: 認証済み
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /auth/logout:
     post:
@@ -77,15 +77,15 @@ paths:
       security:
         - sessionCookie: []
       responses:
-        '204':
+        "204":
           description: セッションCookieを削除しました
           headers:
             Set-Cookie:
               schema:
                 type: string
                 example: aitc_session=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /event-works:
     get:
@@ -93,11 +93,11 @@ paths:
       summary: イベント作品一覧を取得する
       description: 認証不要で閲覧できる公開APIです。
       parameters:
-        - $ref: '#/components/parameters/Year'
-        - $ref: '#/components/parameters/WorkType'
-        - $ref: '#/components/parameters/Sort'
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/WorkType"
+        - $ref: "#/components/parameters/Sort"
       responses:
-        '200':
+        "200":
           description: イベント作品一覧
           content:
             application/json:
@@ -108,19 +108,17 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventWork'
+                      $ref: "#/components/schemas/EventWork"
 
   /members:
     get:
       tags: [Members]
       summary: メンバー一覧を取得する
-      security:
-        - sessionCookie: []
       parameters:
-        - $ref: '#/components/parameters/Generation'
-        - $ref: '#/components/parameters/Department'
+        - $ref: "#/components/parameters/Generation"
+        - $ref: "#/components/parameters/Department"
       responses:
-        '200':
+        "200":
           description: メンバー一覧
           content:
             application/json:
@@ -131,43 +129,34 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Member'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
+                      $ref: "#/components/schemas/Member"
   /members/{id}:
     get:
       tags: [Members]
       summary: メンバー詳細を取得する
-      security:
-        - sessionCookie: []
       parameters:
-        - $ref: '#/components/parameters/MemberId'
+        - $ref: "#/components/parameters/MemberId"
       responses:
-        '200':
+        "200":
           description: メンバー詳細
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Member"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /personal-works:
     get:
       tags: [PersonalWorks]
       summary: 個人作品一覧を取得する
-      security:
-        - sessionCookie: []
       parameters:
-        - $ref: '#/components/parameters/Year'
-        - $ref: '#/components/parameters/WorkType'
-        - $ref: '#/components/parameters/CreatorId'
-        - $ref: '#/components/parameters/Sort'
+        - $ref: "#/components/parameters/Year"
+        - $ref: "#/components/parameters/WorkType"
+        - $ref: "#/components/parameters/CreatorId"
+        - $ref: "#/components/parameters/Sort"
       responses:
-        '200':
+        "200":
           description: 個人作品一覧
           content:
             application/json:
@@ -178,9 +167,39 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/PersonalWork'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/PersonalWork"
+
+  /event-works/{id}:
+    get:
+      tags: [EventWorks]
+      summary: イベント作品詳細を取得する
+      parameters:
+        - $ref: "#/components/parameters/WorkId"
+      responses:
+        "200":
+          description: イベント作品詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventWork"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /personal-works/{id}:
+    get:
+      tags: [PersonalWorks]
+      summary: 個人作品詳細を取得する
+      parameters:
+        - $ref: "#/components/parameters/WorkId"
+      responses:
+        "200":
+          description: 個人作品詳細
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalWork"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
   securitySchemes:
@@ -209,6 +228,13 @@ components:
       schema:
         type: string
         example: akatsuki
+    WorkId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: aitc_1
     CreatorId:
       name: creatorId
       in: query
@@ -233,12 +259,12 @@ components:
       name: department
       in: query
       schema:
-        $ref: '#/components/schemas/Department'
+        $ref: "#/components/schemas/Department"
     WorkType:
       name: type
       in: query
       schema:
-        $ref: '#/components/schemas/WorkType'
+        $ref: "#/components/schemas/WorkType"
     Sort:
       name: sort
       in: query
@@ -253,25 +279,25 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Unauthorized:
       description: 認証が必要です
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Forbidden:
       description: AITC Discordサーバーへの所属を確認できません
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     NotFound:
       description: 指定されたリソースは存在しません
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
   schemas:
     Session:
@@ -288,7 +314,7 @@ components:
             id:
               type: string
               description: Discord User ID
-              example: '123456789012345678'
+              example: "123456789012345678"
             username:
               type: string
               example: aitc_member
@@ -309,7 +335,7 @@ components:
         department:
           type: array
           items:
-            $ref: '#/components/schemas/Department'
+            $ref: "#/components/schemas/Department"
           example: [CG, MV]
         icon:
           type: string
@@ -321,7 +347,7 @@ components:
         links:
           type: array
           items:
-            $ref: '#/components/schemas/Link'
+            $ref: "#/components/schemas/Link"
 
     EventWork:
       type: object
@@ -347,7 +373,7 @@ components:
           format: uri-reference
           example: /images/eventWorks/AITC_calendar.png
         type:
-          $ref: '#/components/schemas/WorkType'
+          $ref: "#/components/schemas/WorkType"
         description:
           type: string
         creatorIds:
@@ -358,7 +384,7 @@ components:
           description: 公開表示用の作者名。メンバーAPIを呼ばずにイベント作品を表示するために返します。
           type: array
           items:
-            $ref: '#/components/schemas/CreatorSummary'
+            $ref: "#/components/schemas/CreatorSummary"
         event:
           type: string
           example: COMITIA 153
@@ -368,11 +394,12 @@ components:
         links:
           type: array
           items:
-            $ref: '#/components/schemas/Link'
+            $ref: "#/components/schemas/Link"
 
     PersonalWork:
       type: object
-      required: [id, title, thumbnail, creatorIds, type, description, createdAt, links]
+      required:
+        [id, title, thumbnail, creatorIds, type, description, createdAt, links]
       properties:
         id:
           type: string
@@ -386,7 +413,7 @@ components:
           items:
             type: string
         type:
-          $ref: '#/components/schemas/WorkType'
+          $ref: "#/components/schemas/WorkType"
         description:
           type: string
         createdAt:
@@ -395,7 +422,7 @@ components:
         links:
           type: array
           items:
-            $ref: '#/components/schemas/Link'
+            $ref: "#/components/schemas/Link"
 
     CreatorSummary:
       type: object

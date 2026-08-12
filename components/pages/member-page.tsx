@@ -1,11 +1,46 @@
-import { eventWorks, members, personalWorks } from "../data";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  fetchMember,
+  fetchMembers,
+  fetchMemberWorks,
+} from "@/lib/api";
+import { Member, Work } from "../data";
 import { Layout } from "../layout";
 import { MemberIcon } from "../member-icon";
 import { MemberWorksBrowser } from "../member-works-browser";
 
 export function MemberPage({ id }: { id: string }) {
-  const member = members.find((item) => item.id === id);
-  if (!member)
+  const [member, setMember] = useState<Member | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [works, setWorks] = useState<Work[]>([]);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setMember(null);
+    setError(false);
+    Promise.all([
+      fetchMember(id),
+      fetchMembers(),
+      fetchMemberWorks(id),
+    ])
+      .then(([profile, directory, memberWorks]) => {
+        if (cancelled) return;
+        setMember(profile);
+        setMembers(directory);
+        setWorks(memberWorks);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (error || !id) {
     return (
       <Layout>
         <section className="page-head">
@@ -13,9 +48,15 @@ export function MemberPage({ id }: { id: string }) {
         </section>
       </Layout>
     );
-  const works = [...personalWorks, ...eventWorks].filter((work) =>
-    work.creatorIds.includes(id),
-  );
+  }
+  if (!member) {
+    return (
+      <Layout>
+        <section className="page-head">読み込み中…</section>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <section className="member-hero">
@@ -24,12 +65,12 @@ export function MemberPage({ id }: { id: string }) {
           <p className="kicker">MEMBER PROFILE</p>
           <h1>{member.name}</h1>
           <p className="meta">
-            第{member.generation}期 · {member.department.join(" / ")}
+            第{member.generation}期 / {member.department.join(" / ")}
           </p>
           <p>{member.profile}</p>
           {member.links.map((link) => (
             <a key={link.name} className="external" href={link.url}>
-              {link.name} ↗
+              {link.name} →
             </a>
           ))}
         </div>
@@ -37,7 +78,7 @@ export function MemberPage({ id }: { id: string }) {
       <section className="collection-main member-works">
         <p className="kicker">WORKS BY {member.name.toUpperCase()}</p>
         <h2>制作作品</h2>
-        <MemberWorksBrowser works={works} />
+        <MemberWorksBrowser works={works} members={members} />
       </section>
     </Layout>
   );

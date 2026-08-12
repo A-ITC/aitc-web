@@ -1,19 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap");
 :root {
   --ink: #10243c;
-  --blue: #f58318;
-  --mint: #40daf5;
+  --blue: oklch(0.6736 0.1235 56.08);
+  --mint: oklch(0.6736 0.1235 221.3);
+  --gradient-middle: oklch(0.6736 0 0);
   --accent-gradient: linear-gradient(
     135deg in oklab,
-    #f58318,
-    #000 50%,
-    #40daf5
+    var(--blue),
+    var(--gradient-middle) 50%,
+    var(--mint)
   );
   --header-gradient: linear-gradient(
     90deg in oklab,
-    #f58318,
-    #000 50%,
-    #40daf5
+    var(--blue),
+    var(--gradient-middle) 50%,
+    var(--mint)
   );
   --paper: #f9fbff;
   --line: #dbe4f0;
@@ -125,14 +126,9 @@ select {
   font-size: 22px;
 }
 .hero {
-  min-height: 620px;
   max-width: 1180px;
   margin: auto;
   padding: 100px 24px 70px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  overflow: hidden;
 }
 .kicker,
 .eyebrow {
@@ -170,55 +166,6 @@ select {
 .hero-text i {
   color: var(--blue);
   font-style: normal;
-}
-.primary {
-  display: inline-flex;
-  gap: 40px;
-  align-items: center;
-  background: var(--accent-gradient);
-  color: white;
-  padding: 15px 20px;
-  font-size: 14px;
-  font-weight: 700;
-  transition: 0.2s;
-}
-.primary:hover {
-  filter: brightness(1.04);
-  transform: translateY(-2px);
-}
-.hero-art {
-  height: 410px;
-  position: relative;
-  background: linear-gradient(140deg, #fff0dc, #ffecd0);
-  border-radius: 55% 45% 52% 48% / 42% 57% 43% 58%;
-  transform: rotate(-8deg);
-}
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  mix-blend-mode: multiply;
-}
-.orb-one {
-  width: 250px;
-  height: 250px;
-  background: var(--blue);
-  top: 50px;
-  left: 100px;
-}
-.orb-two {
-  width: 170px;
-  height: 170px;
-  background: var(--mint);
-  bottom: 30px;
-  right: 65px;
-}
-.grid-spark {
-  position: absolute;
-  right: 70px;
-  top: 50px;
-  color: #fff;
-  font-size: 90px;
-  transform: rotate(12deg);
 }
 .section {
   max-width: 1180px;
@@ -312,11 +259,10 @@ select {
   margin-top: auto;
   display: inline-block;
   padding: 11px 18px;
-  border-radius: 0;
+  border-radius: 4px;
   background: var(--accent-gradient);
-  color: #fff;
+  color: #000;
   font-size: 12px;
-  text-shadow: 0 1px 2px #0008;
 }
 .event {
   background: var(--ink);
@@ -449,12 +395,13 @@ select {
   display: flex;
   padding: 25px;
   overflow: auto;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 .modal {
   position: relative;
   width: min(780px, 100%);
+  margin-block: auto;
   background: #fff;
   box-shadow: 0 30px 80px #0007;
   animation: rise 0.2s ease-out;
@@ -518,6 +465,47 @@ select {
   font-size: 14px;
   line-height: 1.8;
   margin: 27px 0;
+}
+.credit-list {
+  margin: 27px 0;
+}
+.credit-list h3 {
+  font-size: 15px;
+  margin: 0 0 10px;
+}
+.credit-table-wrap {
+  overflow-x: auto;
+}
+.credit-list table {
+  width: 100%;
+  min-width: 440px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.credit-list th,
+.credit-list td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.credit-list th {
+  color: #718096;
+  font-weight: 700;
+}
+.credit-list td:first-child {
+  width: 84px;
+  font-variant-numeric: tabular-nums;
+}
+.credit-list td:nth-child(2) {
+  width: 35%;
+}
+.credit-list td a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.meta-credit-table td:first-child {
+  width: 35%;
 }
 .soundcloud-player {
   margin: 0 0 24px;
@@ -656,32 +644,10 @@ footer small {
     display: flex;
   }
   .hero {
-    min-height: auto;
     padding: 75px 24px;
-    grid-template-columns: 1fr;
   }
   .hero h1 .logo-mark {
     font-size: 84px;
-  }
-  .hero-art {
-    height: 230px;
-    margin-top: 45px;
-  }
-  .orb-one {
-    width: 140px;
-    height: 140px;
-    left: 60px;
-    top: 30px;
-  }
-  .orb-two {
-    width: 100px;
-    height: 100px;
-    right: 35px;
-  }
-  .grid-spark {
-    font-size: 55px;
-    right: 35px;
-    top: 25px;
   }
   .intro {
     grid-template-columns: 1fr;
