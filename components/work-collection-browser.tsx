@@ -14,6 +14,8 @@ import {
 } from "./data";
 import { WorkCard, WorkModal } from "./work-ui";
 
+const AITC_WORK_ID_PREFIX = "aitc_";
+
 const valid = (value: string | null, values: string[]) =>
   value && values.includes(value) ? value : "all";
 
@@ -38,7 +40,13 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
     ])
       .then(([nextWorks, nextMembers]) => {
         if (cancelled) return;
-        setWorks(nextWorks);
+        setWorks(
+          kind === "event"
+            ? nextWorks.filter((work) =>
+                work.id.startsWith(AITC_WORK_ID_PREFIX),
+              )
+            : nextWorks,
+        );
         setMembers(nextMembers);
       })
       .catch(() => {
