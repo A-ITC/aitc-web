@@ -1,4 +1,5 @@
 import { apiBaseUrl } from "./api-config";
+import type { Link, WorkType } from "@/components/data";
 
 export type MemberRole =
   | "REPRESENTATIVE"
@@ -24,8 +25,14 @@ export type MembersOnlyMember = {
 export type MemberWorkReference = {
   workKind: "EVENT" | "PERSONAL";
   title: string;
+  type?: WorkType;
   eventWorkId?: string;
+  eventName?: string;
+  eventWorkTitle?: string;
   personalWorkId?: string;
+  creatorIds?: string[];
+  description?: string;
+  links?: Link[];
   releasedAt?: string;
   createdAt?: string;
   isMeta?: boolean;

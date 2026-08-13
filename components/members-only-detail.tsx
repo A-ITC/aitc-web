@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useDiscordAuth } from "@/lib/discord-auth";
 import {
   fetchMembersOnlyMember,
+  fetchMembersOnlyMembers,
   fetchMembersOnlyMemberWorks,
   MembersOnlyApiError,
   type MembersOnlyMember,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/members-only-api";
 import { MemberIcon } from "./member-icon";
 import { MembersOnlyAuthPanel } from "./members-only-auth-panel";
+import { MembersOnlyWorksBrowser } from "./members-only-works-browser";
 import styles from "./members-only.module.css";
 
 type LoadStatus = "idle" | "loading" | "ready" | "not-found" | "error";
@@ -33,12 +35,6 @@ function validMemberId(values: string[]): string | null {
   return id;
 }
 
-function workDate(work: MemberWorkReference): string {
-  return work.workKind === "EVENT"
-    ? work.releasedAt ?? "日付未設定"
-    : work.createdAt ?? "日付未設定";
-}
-
 export function MembersOnlyDetail() {
   const params = useSearchParams();
   const memberId = validMemberId(params.getAll("id"));
@@ -51,6 +47,7 @@ export function MembersOnlyDetail() {
   } = useDiscordAuth();
   const [member, setMember] = useState<MembersOnlyMember | null>(null);
   const [works, setWorks] = useState<MemberWorkReference[]>([]);
+  const [directory, setDirectory] = useState<MembersOnlyMember[]>([]);
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -62,10 +59,12 @@ export function MembersOnlyDetail() {
 
     void Promise.all([
       fetchMembersOnlyMember(memberId, accessToken, controller.signal),
+      fetchMembersOnlyMembers(accessToken, controller.signal),
       fetchMembersOnlyMemberWorks(memberId, accessToken, controller.signal),
     ])
-      .then(([memberResponse, worksResponse]) => {
+      .then(([memberResponse, directoryResponse, worksResponse]) => {
         setMember(memberResponse);
+        setDirectory(directoryResponse);
         setWorks(worksResponse);
         setLoadStatus("ready");
       })
@@ -188,23 +187,11 @@ export function MembersOnlyDetail() {
         {works.length === 0 ? (
           <p className={styles.empty}>登録されている作品はありません。</p>
         ) : (
-          <div className={styles.workList}>
-            {works.map((work, index) => (
-              <article
-                key={`${work.workKind}-${work.eventWorkId ?? work.personalWorkId ?? index}`}
-                className={styles.workItem}
-              >
-                <div>
-                  <span>
-                    {work.workKind === "EVENT" ? "イベント作品" : "個人作品"}
-                  </span>
-                  {work.isMeta && <span>共通クレジット</span>}
-                </div>
-                <h3>{work.title}</h3>
-                <time>{workDate(work)}</time>
-              </article>
-            ))}
-          </div>
+          <MembersOnlyWorksBrowser
+            references={works}
+            memberId={member.id}
+            directory={directory}
+          />
         )}
       </section>
     </>

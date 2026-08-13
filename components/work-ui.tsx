@@ -18,12 +18,15 @@ export function WorkCard({
   onClick,
   members,
   showCreator = false,
+  displayTitle,
 }: {
   work: Work;
   onClick: () => void;
   members: Member[];
   showCreator?: boolean;
+  displayTitle?: string;
 }) {
+  const title = displayTitle ?? work.title;
   const creators = work.creatorIds
     .map((id) => members.find((member) => member.id === id)?.name ?? id)
     .join(" / ");
@@ -32,13 +35,13 @@ export function WorkCard({
       <span className="thumb">
         <img
           src={withBasePath(work.thumbnail)}
-          alt={`${work.title}のサムネイル`}
+          alt={`${title}のサムネイル`}
           loading="lazy"
         />
       </span>
       <span className="work-copy">
         <span className="eyebrow">{typeLabel[work.type]}</span>
-        <strong>{work.title}</strong>
+        <strong>{title}</strong>
         {showCreator && <small>{creators}</small>}
       </span>
     </button>
@@ -51,12 +54,14 @@ export function WorkModal({
   works,
   members,
   onClose,
+  memberHref = (id) => `/member?id=${encodeURIComponent(id)}`,
 }: {
   work: Work;
   kind: CollectionKind;
   works: Work[];
   members: Member[];
   onClose: () => void;
+  memberHref?: (id: string) => string;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const [detail, setDetail] = useState(work);
@@ -195,7 +200,7 @@ export function WorkModal({
                           {credit.creatorIds.map((id, index) => (
                             <span key={id}>
                               {index > 0 && " / "}
-                              <Link href={`/member?id=${encodeURIComponent(id)}`}>
+                              <Link href={memberHref(id)}>
                                 {members.find((member) => member.id === id)?.name ?? id}
                               </Link>
                             </span>
@@ -221,7 +226,7 @@ export function WorkModal({
                           {credit.creatorIds.map((id, index) => (
                             <span key={id}>
                               {index > 0 && " / "}
-                              <Link href={`/member?id=${encodeURIComponent(id)}`}>
+                              <Link href={memberHref(id)}>
                                 {members.find((member) => member.id === id)?.name ?? id}
                               </Link>
                             </span>
