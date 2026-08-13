@@ -45,9 +45,6 @@ export function Header() {
           <Link href="/personal-works" onClick={close}>
             個人作品集
           </Link>
-          <Link href="/members" onClick={close}>
-            メンバー
-          </Link>
           <Link href="/members-only" onClick={close}>
             部員向け
           </Link>

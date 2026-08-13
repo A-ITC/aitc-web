@@ -14,7 +14,6 @@ function Footer() {
         <Link href="/">トップ</Link>
         <Link href="/event-works">イベント作品集</Link>
         <Link href="/personal-works">個人作品集</Link>
-        <Link href="/members">メンバー</Link>
         <Link href="/members-only">部員向け</Link>
         <a href="https://x.com/AInfTechClub" target="_blank" rel="noreferrer">
           𝕏

@@ -30,6 +30,7 @@ jobs:
       - run: npm run build
         env:
           CUSTOM_DOMAIN: "true"
+          NEXT_PUBLIC_API_BASE_URL: "https://api.a-i-t-c.com"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
