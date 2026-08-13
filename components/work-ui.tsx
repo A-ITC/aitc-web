@@ -127,8 +127,8 @@ export function WorkModal({
   const bandcampLink =
     detail.type === "Music"
       ? detail.links.find(
-          (link) => link.url.includes("bandcamp.com") && link.embedUrl,
-        )
+        (link) => link.url.includes("bandcamp.com") && link.embedUrl,
+      )
       : undefined;
   const bandcampEmbedUrl = bandcampLink?.embedUrl;
   const credits = eventWork?.credits ?? [];
@@ -200,9 +200,7 @@ export function WorkModal({
                           {credit.creatorIds.map((id, index) => (
                             <span key={id}>
                               {index > 0 && " / "}
-                              <Link href={memberHref(id)}>
-                                {members.find((member) => member.id === id)?.name ?? id}
-                              </Link>
+                              {members.find((member) => member.id === id)?.name ?? id}
                             </span>
                           ))}
                         </td>
@@ -226,9 +224,7 @@ export function WorkModal({
                           {credit.creatorIds.map((id, index) => (
                             <span key={id}>
                               {index > 0 && " / "}
-                              <Link href={memberHref(id)}>
-                                {members.find((member) => member.id === id)?.name ?? id}
-                              </Link>
+                              {members.find((member) => member.id === id)?.name ?? id}
                             </span>
                           ))}
                         </td>
