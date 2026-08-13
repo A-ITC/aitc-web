@@ -194,13 +194,9 @@ export function MemberDirectoryBrowser() {
                                 <MemberIcon id={member.id} name={member.name} />
                                 <div>
                                   <p className="eyebrow">
-                                    {member.department.join(" / ")} · 第
-                                    {member.generation}期
+                                    {member.department.join(" / ")}
                                   </p>
                                   <h3>{member.name}</h3>
-                                  <p className={styles.description}>
-                                    {member.profile}
-                                  </p>
                                   <span className={styles.cta}>
                                     プロフィールを見る →
                                   </span>

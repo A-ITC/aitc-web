@@ -89,6 +89,9 @@
   border-radius: 50%;
   background: #dfe9f7;
 }
+.card :global(.eyebrow) {
+  margin: 2px 0 4px;
+}
 .card h2,
 .card h3 {
   font-size: 25px;
