@@ -55,7 +55,7 @@ async function request<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function workThumbnailUrl(id: string): string {
+export function workThumbnailUrl(id: string): string {
   return `${workThumbnailBaseUrl}/${encodeURIComponent(id)}.png`;
 }
 
