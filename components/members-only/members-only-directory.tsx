@@ -16,163 +16,86 @@ import memberStyles from "../members.module.css";
 import styles from "./members-only.module.css";
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
+type FilterKey = "generation" | "department";
+type MemberGroup = {
+  generation: number;
+  members: MembersOnlyMember[];
+};
 
-export function MembersOnlyDirectory() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const reduceMotion = useReducedMotion();
-  const {
-    accessToken,
-    status: authStatus,
-    startAuthentication,
-    logout,
-    invalidateAuthentication,
-  } = useDiscordAuth();
-  const [members, setMembers] = useState<MembersOnlyMember[]>([]);
-  const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
-    new Set(),
-  );
-  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    if (authStatus !== "authenticated" || !accessToken) return;
-
-    const controller = new AbortController();
-    setLoadStatus("loading");
-
-    void fetchMembersOnlyMembers(accessToken, controller.signal)
-      .then((items) => {
-        setMembers(items);
-        setLoadStatus("ready");
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (
-          error instanceof MembersOnlyApiError &&
-          (error.status === 401 || error.status === 403)
-        ) {
-          invalidateAuthentication();
-          setLoadStatus("idle");
-          return;
-        }
-        setLoadStatus("error");
-      });
-
-    return () => controller.abort();
-  }, [accessToken, authStatus, invalidateAuthentication, reloadKey]);
-
-  const generations = useMemo(
-    () => [...new Set(members.map((member) => member.generation))].sort((a, b) => a - b),
-    [members],
-  );
-  const departments = useMemo(
-    () => [...new Set(members.flatMap((member) => member.department))].sort(),
-    [members],
-  );
-  const rawGeneration = params.get("generation");
-  const generation =
-    rawGeneration && generations.includes(Number(rawGeneration))
-      ? rawGeneration
-      : "all";
-  const rawDepartment = params.get("department");
-  const department =
-    rawDepartment && departments.includes(rawDepartment) ? rawDepartment : "all";
-  const visibleMembers = members.filter(
-    (member) =>
-      (generation === "all" || member.generation === Number(generation)) &&
-      (department === "all" || member.department.includes(department)),
-  );
-  const memberGroups = generations
-    .map((value) => ({
-      generation: value,
-      members: visibleMembers.filter((member) => member.generation === value),
-    }))
-    .filter((group) => group.members.length > 0)
-    .sort((a, b) => b.generation - a.generation);
-
-  const setFilter = (key: "generation" | "department", value: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (value === "all") next.delete(key);
-    else next.set(key, value);
-    setCollapsedGenerations(new Set());
-    router.push(`/members-only${next.size ? `?${next.toString()}` : ""}`, {
-      scroll: false,
-    });
-  };
-  const toggleGeneration = (value: number) => {
-    setCollapsedGenerations((current) => {
-      const next = new Set(current);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
-  };
-
-  if (authStatus !== "authenticated") {
-    return (
-      <MembersOnlyAuthPanel
-        status={authStatus}
-        onAuthenticate={startAuthentication}
-      />
-    );
-  }
-
-  if (loadStatus === "loading" || loadStatus === "idle") {
-    return (
-      <div className={styles.statePanel} aria-live="polite">
-        <span className={styles.indicator} aria-hidden="true" />
-        <h2>メンバー一覧を読み込んでいます</h2>
-      </div>
-    );
-  }
-
-  if (loadStatus === "error") {
-    return (
-      <div className={styles.statePanel} role="alert">
-        <span className={styles.errorMark} aria-hidden="true">!</span>
-        <h2>メンバー一覧を読み込めませんでした</h2>
-        <p>時間をおいて、もう一度お試しください。</p>
-        <button className={styles.primaryButton} onClick={() => setReloadKey((key) => key + 1)}>
-          再読み込み
-        </button>
-      </div>
-    );
-  }
-
+function MembersOnlyFilters({
+  generations,
+  departments,
+  generation,
+  department,
+  onFilterChange,
+  onLogout,
+}: {
+  generations: number[];
+  departments: string[];
+  generation: string;
+  department: string;
+  onFilterChange: (key: FilterKey, value: string) => void;
+  onLogout: () => void;
+}) {
   return (
-    <section className={memberStyles.main}>
-      <div className={styles.toolbar}>
-        <div className="filters">
-          <label>
-            加入期
-            <select
-              value={generation}
-              onChange={(event) => setFilter("generation", event.target.value)}
-            >
-              <option value="all">すべて</option>
-              {generations.map((value) => (
-                <option key={value} value={value}>{value}期生</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            所属部門
-            <select
-              value={department}
-              onChange={(event) => setFilter("department", event.target.value)}
-            >
-              <option value="all">すべて</option>
-              {departments.map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <button className={styles.logoutButton} onClick={logout}>ログアウト</button>
+    <div className={styles.toolbar}>
+      <div className="filters">
+        <label>
+          加入期
+          <select
+            value={generation}
+            onChange={(event) =>
+              onFilterChange("generation", event.target.value)
+            }
+          >
+            <option value="all">すべて</option>
+            {generations.map((value) => (
+              <option key={value} value={value}>
+                {value}期生
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          所属部門
+          <select
+            value={department}
+            onChange={(event) =>
+              onFilterChange("department", event.target.value)
+            }
+          >
+            <option value="all">すべて</option>
+            {departments.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
+      <button className={styles.logoutButton} onClick={onLogout}>
+        ログアウト
+      </button>
+    </div>
+  );
+}
 
-      <p className="count">{visibleMembers.length} members</p>
+function MembersOnlyList({
+  memberGroups,
+  memberCount,
+  collapsedGenerations,
+  reduceMotion,
+  onToggleGeneration,
+}: {
+  memberGroups: MemberGroup[];
+  memberCount: number;
+  collapsedGenerations: Set<number>;
+  reduceMotion: boolean | null;
+  onToggleGeneration: (generation: number) => void;
+}) {
+  return (
+    <>
+      <p className="count">{memberCount} members</p>
       {memberGroups.length === 0 ? (
         <p className={memberStyles.empty}>該当するメンバーはいません。</p>
       ) : (
@@ -189,7 +112,7 @@ export function MembersOnlyDirectory() {
                     className={memberStyles.groupToggle}
                     aria-expanded={isExpanded}
                     aria-controls={contentId}
-                    onClick={() => toggleGeneration(group.generation)}
+                    onClick={() => onToggleGeneration(group.generation)}
                   >
                     <span>
                       {group.generation}期生 ({group.members.length})
@@ -268,6 +191,150 @@ export function MembersOnlyDirectory() {
           })}
         </div>
       )}
+    </>
+  );
+}
+
+export function MembersOnlyDirectory() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const reduceMotion = useReducedMotion();
+  const {
+    accessToken,
+    status: authStatus,
+    startAuthentication,
+    logout,
+    invalidateAuthentication,
+  } = useDiscordAuth();
+  const [members, setMembers] = useState<MembersOnlyMember[]>([]);
+  const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
+    new Set(),
+  );
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !accessToken) return;
+
+    const controller = new AbortController();
+    setLoadStatus("loading");
+
+    void fetchMembersOnlyMembers(accessToken, controller.signal)
+      .then((items) => {
+        setMembers(items);
+        setLoadStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (
+          error instanceof MembersOnlyApiError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          invalidateAuthentication();
+          setLoadStatus("idle");
+          return;
+        }
+        setLoadStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [accessToken, authStatus, invalidateAuthentication, reloadKey]);
+
+  const generations = useMemo(
+    () => [...new Set(members.map((member) => member.generation))].sort((a, b) => a - b),
+    [members],
+  );
+  const departments = useMemo(
+    () => [...new Set(members.flatMap((member) => member.department))].sort(),
+    [members],
+  );
+  const rawGeneration = params.get("generation");
+  const generation =
+    rawGeneration && generations.includes(Number(rawGeneration))
+      ? rawGeneration
+      : "all";
+  const rawDepartment = params.get("department");
+  const department =
+    rawDepartment && departments.includes(rawDepartment) ? rawDepartment : "all";
+  const visibleMembers = members.filter(
+    (member) =>
+      (generation === "all" || member.generation === Number(generation)) &&
+      (department === "all" || member.department.includes(department)),
+  );
+  const memberGroups = generations
+    .map((value) => ({
+      generation: value,
+      members: visibleMembers.filter((member) => member.generation === value),
+    }))
+    .filter((group) => group.members.length > 0)
+    .sort((a, b) => b.generation - a.generation);
+
+  const setFilter = (key: FilterKey, value: string) => {
+    const next = new URLSearchParams(params.toString());
+    if (value === "all") next.delete(key);
+    else next.set(key, value);
+    setCollapsedGenerations(new Set());
+    router.push(`/members-only${next.size ? `?${next.toString()}` : ""}`, {
+      scroll: false,
+    });
+  };
+  const toggleGeneration = (value: number) => {
+    setCollapsedGenerations((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
+
+  if (authStatus !== "authenticated") {
+    return (
+      <MembersOnlyAuthPanel
+        status={authStatus}
+        onAuthenticate={startAuthentication}
+      />
+    );
+  }
+
+  if (loadStatus === "loading" || loadStatus === "idle") {
+    return (
+      <div className={styles.statePanel} aria-live="polite">
+        <span className={styles.indicator} aria-hidden="true" />
+        <h2>メンバー一覧を読み込んでいます</h2>
+      </div>
+    );
+  }
+
+  if (loadStatus === "error") {
+    return (
+      <div className={styles.statePanel} role="alert">
+        <span className={styles.errorMark} aria-hidden="true">!</span>
+        <h2>メンバー一覧を読み込めませんでした</h2>
+        <p>時間をおいて、もう一度お試しください。</p>
+        <button className={styles.primaryButton} onClick={() => setReloadKey((key) => key + 1)}>
+          再読み込み
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <section className={memberStyles.main}>
+      <MembersOnlyFilters
+        generations={generations}
+        departments={departments}
+        generation={generation}
+        department={department}
+        onFilterChange={setFilter}
+        onLogout={logout}
+      />
+      <MembersOnlyList
+        memberGroups={memberGroups}
+        memberCount={visibleMembers.length}
+        collapsedGenerations={collapsedGenerations}
+        reduceMotion={reduceMotion}
+        onToggleGeneration={toggleGeneration}
+      />
     </section>
   );
 }
