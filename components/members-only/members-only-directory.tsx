@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Children,
+  isValidElement,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useDiscordAuth } from "@/lib/discord-auth";
 import {
   fetchMembersOnlyMembers,
@@ -96,6 +103,103 @@ function MembersOnlyMemberLink({ member }: { member: MembersOnlyMember }) {
   );
 }
 
+function MembersOnlyMemberGroupRoot({ children }: { children: ReactNode }) {
+  return <section className={memberStyles.group}>{children}</section>;
+}
+
+function MembersOnlyMemberGroupHeader({
+  isExpanded,
+  contentId,
+  onToggle,
+  children,
+}: {
+  isExpanded: boolean;
+  contentId: string;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <h2 className={memberStyles.groupHeading}>
+      <button
+        type="button"
+        className={memberStyles.groupToggle}
+        aria-expanded={isExpanded}
+        aria-controls={contentId}
+        onClick={onToggle}
+      >
+        {children}
+      </button>
+    </h2>
+  );
+}
+
+function MembersOnlyMemberGroupSection({
+  isExpanded,
+  contentId,
+  reduceMotion,
+  children,
+}: {
+  isExpanded: boolean;
+  contentId: string;
+  reduceMotion: boolean | null;
+  children: ReactNode;
+}) {
+  const items = Children.toArray(children);
+
+  return (
+    <AnimatePresence initial={false}>
+      {isExpanded && (
+        <motion.div
+          id={contentId}
+          className={memberStyles.groupContent}
+          initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : { duration: 0.2, ease: "easeOut" }
+          }
+        >
+          <div className={memberStyles.grid} style={{ position: "relative" }}>
+            <AnimatePresence mode="popLayout">
+              {items.map((item, index) => (
+                <motion.div
+                  key={isValidElement(item) && item.key !== null ? item.key : index}
+                  layout
+                  initial={
+                    reduceMotion ? false : { opacity: 0, scale: 0.96 }
+                  }
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : {
+                          duration: 0.16,
+                          layout: {
+                            duration: 0.25,
+                            ease: "easeOut",
+                          },
+                        }
+                  }
+                >
+                  {item}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+const MembersOnlyMemberGroup = Object.assign(MembersOnlyMemberGroupRoot, {
+  Header: MembersOnlyMemberGroupHeader,
+  Section: MembersOnlyMemberGroupSection,
+});
+
 function MembersOnlyList({
   memberGroups,
   memberCount,
@@ -121,74 +225,29 @@ function MembersOnlyList({
             const contentId = `members-only-generation-${group.generation}`;
 
             return (
-              <section className={memberStyles.group} key={group.generation}>
-                <h2 className={memberStyles.groupHeading}>
-                  <button
-                    type="button"
-                    className={memberStyles.groupToggle}
-                    aria-expanded={isExpanded}
-                    aria-controls={contentId}
-                    onClick={() => onToggleGeneration(group.generation)}
-                  >
-                    <span>
-                      {group.generation}期生 ({group.members.length})
-                    </span>
-                    <span className={memberStyles.chevron} aria-hidden="true">
-                      ↓
-                    </span>
-                  </button>
-                </h2>
-                <AnimatePresence initial={false}>
-                  {isExpanded && (
-                    <motion.div
-                      id={contentId}
-                      className={memberStyles.groupContent}
-                      initial={reduceMotion ? false : { height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={
-                        reduceMotion
-                          ? { duration: 0 }
-                          : { duration: 0.2, ease: "easeOut" }
-                      }
-                    >
-                      <div
-                        className={memberStyles.grid}
-                        style={{ position: "relative" }}
-                      >
-                        <AnimatePresence mode="popLayout">
-                          {group.members.map((member) => (
-                            <motion.div
-                              key={member.id}
-                              layout
-                              initial={
-                                reduceMotion
-                                  ? false
-                                  : { opacity: 0, scale: 0.96 }
-                              }
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.96 }}
-                              transition={
-                                reduceMotion
-                                  ? { duration: 0 }
-                                  : {
-                                      duration: 0.16,
-                                      layout: {
-                                        duration: 0.25,
-                                        ease: "easeOut",
-                                      },
-                                    }
-                              }
-                            >
-                              <MembersOnlyMemberLink member={member} />
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </section>
+              <MembersOnlyMemberGroup key={group.generation}>
+                <MembersOnlyMemberGroup.Header
+                  isExpanded={isExpanded}
+                  contentId={contentId}
+                  onToggle={() => onToggleGeneration(group.generation)}
+                >
+                  <span>
+                    {group.generation}期生 ({group.members.length})
+                  </span>
+                  <span className={memberStyles.chevron} aria-hidden="true">
+                    ↓
+                  </span>
+                </MembersOnlyMemberGroup.Header>
+                <MembersOnlyMemberGroup.Section
+                  isExpanded={isExpanded}
+                  contentId={contentId}
+                  reduceMotion={reduceMotion}
+                >
+                  {group.members.map((member) => (
+                    <MembersOnlyMemberLink key={member.id} member={member} />
+                  ))}
+                </MembersOnlyMemberGroup.Section>
+              </MembersOnlyMemberGroup>
             );
           })}
         </div>
