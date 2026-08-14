@@ -80,6 +80,22 @@ function MembersOnlyFilters({
   );
 }
 
+function MembersOnlyMemberLink({ member }: { member: MembersOnlyMember }) {
+  return (
+    <Link
+      href={`/members-only/members?id=${encodeURIComponent(member.id)}`}
+      className={memberStyles.card}
+    >
+      <MemberIcon id={member.id} name={member.name} />
+      <div>
+        <p className="eyebrow">{member.department.join(" / ")}</p>
+        <h3>{member.name}</h3>
+        <span className={memberStyles.cta}>プロフィールを見る →</span>
+      </div>
+    </Link>
+  );
+}
+
 function MembersOnlyList({
   memberGroups,
   memberCount,
@@ -164,21 +180,7 @@ function MembersOnlyList({
                                     }
                               }
                             >
-                              <Link
-                                href={`/members-only/members?id=${encodeURIComponent(member.id)}`}
-                                className={memberStyles.card}
-                              >
-                                <MemberIcon id={member.id} name={member.name} />
-                                <div>
-                                  <p className="eyebrow">
-                                    {member.department.join(" / ")}
-                                  </p>
-                                  <h3>{member.name}</h3>
-                                  <span className={memberStyles.cta}>
-                                    プロフィールを見る →
-                                  </span>
-                                </div>
-                              </Link>
+                              <MembersOnlyMemberLink member={member} />
                             </motion.div>
                           ))}
                         </AnimatePresence>
