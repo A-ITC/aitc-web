@@ -13,7 +13,7 @@ import {
   type MemberRole,
   type MemberWorkReference,
 } from "@/lib/members-only-api";
-import { MemberIcon } from "./member-icon";
+import { MemberIcon } from "../member-icon";
 import { MembersOnlyAuthPanel } from "./members-only-auth-panel";
 import { MembersOnlyWorksBrowser } from "./members-only-works-browser";
 import styles from "./members-only.module.css";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Layout } from "@/components/layout";
+import { Layout } from "@/components/common/layout";
 import { DiscordAuthTest } from "@/components/discord-auth-test";
 
 export const metadata: Metadata = {

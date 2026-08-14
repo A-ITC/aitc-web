@@ -10,9 +10,9 @@ import {
   MembersOnlyApiError,
   type MembersOnlyMember,
 } from "@/lib/members-only-api";
-import { MemberIcon } from "./member-icon";
+import { MemberIcon } from "../member-icon";
 import { MembersOnlyAuthPanel } from "./members-only-auth-panel";
-import memberStyles from "./members.module.css";
+import memberStyles from "../members.module.css";
 import styles from "./members-only.module.css";
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";

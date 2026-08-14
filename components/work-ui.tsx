@@ -54,7 +54,7 @@ export function WorkModal({
   works,
   members,
   onClose,
-  memberHref = (id) => `/member?id=${encodeURIComponent(id)}`,
+  memberHref,
 }: {
   work: Work;
   kind: CollectionKind;
@@ -200,7 +200,13 @@ export function WorkModal({
                           {credit.creatorIds.map((id, index) => (
                             <span key={id}>
                               {index > 0 && " / "}
-                              {members.find((member) => member.id === id)?.name ?? id}
+                              {memberHref ? (
+                                <Link href={memberHref(id)}>
+                                  {members.find((member) => member.id === id)?.name ?? id}
+                                </Link>
+                              ) : (
+                                members.find((member) => member.id === id)?.name ?? id
+                              )}
                             </span>
                           ))}
                         </td>
@@ -224,7 +230,13 @@ export function WorkModal({
                           {credit.creatorIds.map((id, index) => (
                             <span key={id}>
                               {index > 0 && " / "}
-                              {members.find((member) => member.id === id)?.name ?? id}
+                              {memberHref ? (
+                                <Link href={memberHref(id)}>
+                                  {members.find((member) => member.id === id)?.name ?? id}
+                                </Link>
+                              ) : (
+                                members.find((member) => member.id === id)?.name ?? id
+                              )}
                             </span>
                           ))}
                         </td>
