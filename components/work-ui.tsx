@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CollectionKind,
   isEventWork,
@@ -12,6 +12,7 @@ import {
   Work,
 } from "./data";
 import { fetchWorkDetail } from "@/lib/api";
+import { CoreModal } from "./common/core-modal";
 
 export function WorkCard({
   work,
@@ -63,7 +64,6 @@ export function WorkModal({
   onClose: () => void;
   memberHref?: (id: string) => string;
 }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
   const [detail, setDetail] = useState(work);
   const [detailError, setDetailError] = useState(false);
   const related = works
@@ -89,33 +89,6 @@ export function WorkModal({
       cancelled = true;
     };
   }, [kind, work]);
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-      if (event.key !== "Tab") return;
-      const nodes = [
-        ...document.querySelectorAll<HTMLButtonElement | HTMLAnchorElement>(
-          ".modal a, .modal button",
-        ),
-      ];
-      const index = nodes.indexOf(document.activeElement as HTMLButtonElement);
-      if (event.shiftKey && index <= 0) {
-        event.preventDefault();
-        nodes.at(-1)?.focus();
-      }
-      if (!event.shiftKey && index === nodes.length - 1) {
-        event.preventDefault();
-        nodes[0]?.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
   const eventWork = isEventWork(detail) ? detail : null;
   const soundcloudLink =
     detail.type === "Music"
@@ -139,27 +112,7 @@ export function WorkModal({
     (credit) => Number(credit.trackNumber) === 0,
   );
   return (
-    <div
-      className="overlay"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <section
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-      >
-        <button
-          ref={closeRef}
-          className="close"
-          onClick={onClose}
-          aria-label="閉じる"
-        >
-          ×
-        </button>
+    <CoreModal ariaLabelledBy="modal-title" onClose={onClose}>
         <img
           className="modal-image"
           src={withBasePath(detail.thumbnail)}
@@ -302,7 +255,6 @@ export function WorkModal({
             </div>
           </div>
         )}
-      </section>
-    </div>
+    </CoreModal>
   );
 }
