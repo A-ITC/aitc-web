@@ -35,55 +35,56 @@ function MembersOnlyFilters({
   generation,
   department,
   onFilterChange,
-  onLogout,
 }: {
   generations: number[];
   departments: string[];
   generation: string;
   department: string;
   onFilterChange: (key: FilterKey, value: string) => void;
-  onLogout: () => void;
 }) {
   return (
-    <div className={styles.toolbar}>
-      <div className="filters">
-        <label>
-          加入期
-          <select
-            value={generation}
-            onChange={(event) =>
-              onFilterChange("generation", event.target.value)
-            }
-          >
-            <option value="all">すべて</option>
-            {generations.map((value) => (
-              <option key={value} value={value}>
-                {value}期生
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          所属部門
-          <select
-            value={department}
-            onChange={(event) =>
-              onFilterChange("department", event.target.value)
-            }
-          >
-            <option value="all">すべて</option>
-            {departments.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <button className={styles.logoutButton} onClick={onLogout}>
-        ログアウト
-      </button>
+    <div className="filters">
+      <label>
+        加入期
+        <select
+          value={generation}
+          onChange={(event) =>
+            onFilterChange("generation", event.target.value)
+          }
+        >
+          <option value="all">すべて</option>
+          {generations.map((value) => (
+            <option key={value} value={value}>
+              {value}期生
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        所属部門
+        <select
+          value={department}
+          onChange={(event) =>
+            onFilterChange("department", event.target.value)
+          }
+        >
+          <option value="all">すべて</option>
+          {departments.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
+  );
+}
+
+function MembersOnlyLogoutButton({ onLogout }: { onLogout: () => void }) {
+  return (
+    <button className={styles.logoutButton} onClick={onLogout}>
+      ログアウト
+    </button>
   );
 }
 
@@ -381,14 +382,16 @@ export function MembersOnlyDirectory() {
 
   return (
     <section className={memberStyles.main}>
-      <MembersOnlyFilters
-        generations={generations}
-        departments={departments}
-        generation={generation}
-        department={department}
-        onFilterChange={setFilter}
-        onLogout={logout}
-      />
+      <div className={styles.toolbar}>
+        <MembersOnlyFilters
+          generations={generations}
+          departments={departments}
+          generation={generation}
+          department={department}
+          onFilterChange={setFilter}
+        />
+        <MembersOnlyLogoutButton onLogout={logout} />
+      </div>
       <MembersOnlyList
         memberGroups={memberGroups}
         memberCount={visibleMembers.length}
