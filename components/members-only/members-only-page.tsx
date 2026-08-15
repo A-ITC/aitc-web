@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { Layout } from "./layout";
+import { Layout } from "../common/layout";
 import { MembersOnlyDirectory } from "./members-only-directory";
 import { MembersOnlyDetail } from "./members-only-detail";
 import styles from "./members-only.module.css";

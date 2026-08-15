@@ -1,6 +1,6 @@
 # AITC Web
 
-AITC（Alumni of Information and Technology Club）の活動、イベント作品、個人作品、メンバーを紹介する静的Webサイトです。
+AITC（Alumni of Information and Technology Club）の活動、イベント作品、個人作品を紹介するWebサイトです。
 
 ## 主な機能
 
@@ -8,8 +8,7 @@ AITC（Alumni of Information and Technology Club）の活動、イベント作�
 - イベント作品集・個人作品集
 - 作品の年・作者・イベントによるフィルタと並び替え
 - 作品詳細モーダルと関連作品表示
-- メンバー一覧、加入期・所属部門によるフィルタ
-- メンバープロフィールと制作作品一覧
+- Discord認証済み部員向けのメンバー一覧・プロフィール
 - モバイル対応、キーボード操作、画像の遅延読込
 
 ## 利用技術
@@ -29,19 +28,17 @@ AITC（Alumni of Information and Technology Club）の活動、イベント作�
 ├── app/                         # Next.jsのルーティングと共通スタイル
 │   ├── event-works/             # イベント作品集
 │   ├── personal-works/          # 個人作品集
-│   ├── members/                 # メンバー一覧・プロフィール・フィルタルート
+│   ├── members-only/            # Discord認証済み部員向けページ
 │   ├── globals.css              # 共通スタイル
 │   └── layout.tsx               # HTMLメタデータとルートレイアウト
 ├── components/                  # UIコンポーネント
-│   ├── pages/                   # ページ本体コンポーネント
+│   ├── common/                  # Header、Footer、Layout、ロゴ
+│   ├── members-only/            # 部員向けページのコンポーネントとスタイル
+│   ├── pages/                   # 公開ページ本体コンポーネント
 │   ├── data.ts                  # データ読込・型・共通関数
-│   ├── layout.tsx               # Header、Footer、Layout、ロゴ
 │   ├── work-ui.tsx              # 作品カード・詳細モーダル
 │   └── members.module.css       # メンバー一覧専用スタイル
-├── data/                        # メンバー・作品データのJSON
-│   ├── members.json
-│   ├── eventWorks.json
-│   └── personalWorks.json
+├── lib/                         # APIクライアントとDiscord認証
 ├── docs/                        # 開発・データ管理ドキュメント
 │   ├── architecture.md
 │   └── data-management.md
@@ -97,7 +94,7 @@ WebSocket connection to 'ws://192.168.x.x:3000/_next/webpack-hmr…' failed
 
 ## コンテンツの更新
 
-作品とメンバーは `data/` 配下のJSONを編集して更新します。画像は `public/images/` に置き、JSONから `/images/ファイル名` として参照します。
+作品とメンバーのデータはAPIから取得します。画像は `public/images/` に置くか、APIが返す画像URLから参照します。
 
 JSONの項目、追加例、注意事項は [データ管理ガイド](./docs/data-management.md) を参照してください。コンポーネント構成と実装方針は [アーキテクチャドキュメント](./docs/architecture.md) に記載しています。
 

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { CollectionKind } from "../data";
-import { Layout } from "../layout";
+import { Layout } from "../common/layout";
 import { CollectionBrowser } from "../work-collection-browser";
 
 export function CollectionPage({ kind }: { kind: CollectionKind }) {

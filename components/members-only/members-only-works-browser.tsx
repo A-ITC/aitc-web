@@ -6,8 +6,8 @@ import type {
   MembersOnlyMember,
   MemberWorkReference,
 } from "@/lib/members-only-api";
-import type { Member, Work } from "./data";
-import { WorkCard, WorkModal } from "./work-ui";
+import type { Member, Work } from "../data";
+import { WorkCard, WorkModal } from "../work-ui";
 
 function toMember(member: MembersOnlyMember): Member {
   return {
