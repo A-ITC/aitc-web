@@ -123,17 +123,17 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
   );
 
   if (loading)
-    return <section className="collection-main">読み込み中…</section>;
+    return <section className="mx-auto max-w-6xl px-6 pt-10 pb-28">読み込み中…</section>;
   if (error)
     return (
-      <section className="collection-main">
+      <section className="mx-auto max-w-6xl px-6 pt-10 pb-28">
         データを取得できませんでした。
       </section>
     );
 
   return (
-    <section className="collection-main">
-      <div className="filters">
+    <section className="mx-auto max-w-6xl px-6 pt-10 pb-28">
+      <div className="flex flex-wrap gap-3.5 [&_label]:flex [&_label]:items-center [&_label]:gap-2 [&_label]:text-xs [&_label]:font-bold [&_select]:rounded-none [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:py-2 [&_select]:pr-8 [&_select]:pl-3 [&_select]:text-slate-900">
         <label>
           年
           <select
@@ -206,24 +206,16 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
           </select>
         </label>
       </div>
-      <p className="count">{visibleWorks.length} works</p>
-      <div className="works-grid" style={{ position: "relative" }}>
+      <p className="mt-10 mb-5 font-['DM_Mono',monospace] text-xs text-slate-500">{visibleWorks.length} works</p>
+      <div className="relative grid grid-cols-2 gap-3.5 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
         <AnimatePresence mode="popLayout">
           {visibleWorks.map((work) => (
             <motion.div
               key={work.id}
-              layout
-              initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      duration: 0.16,
-                      layout: { duration: 0.25, ease: "easeOut" },
-                    }
-              }
+              layout={!reduceMotion}
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
             >
               <WorkCard
                 work={work}

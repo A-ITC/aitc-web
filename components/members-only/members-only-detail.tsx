@@ -16,7 +16,6 @@ import {
 import { MemberIcon } from "../member-icon";
 import { MembersOnlyAuthPanel } from "./members-only-auth-panel";
 import { MembersOnlyWorksBrowser } from "./members-only-works-browser";
-import styles from "./members-only.module.css";
 
 type LoadStatus = "idle" | "loading" | "ready" | "not-found" | "error";
 
@@ -95,10 +94,10 @@ export function MembersOnlyDetail() {
 
   if (!memberId) {
     return (
-      <div className={styles.statePanel} role="alert">
-        <span className={styles.errorMark} aria-hidden="true">!</span>
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl" role="alert">
+        <span className="grid size-14 place-items-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2>メンバーが指定されていません</h2>
-        <Link className={styles.primaryLink} href="/members-only">一覧へ戻る</Link>
+        <Link className="min-w-44 cursor-pointer rounded-sm border-0 bg-[var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" href="/members-only">一覧へ戻る</Link>
       </div>
     );
   }
@@ -114,8 +113,8 @@ export function MembersOnlyDetail() {
 
   if (loadStatus === "loading" || loadStatus === "idle") {
     return (
-      <div className={styles.statePanel} aria-live="polite">
-        <span className={styles.indicator} aria-hidden="true" />
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl" aria-live="polite">
+        <span className="grid size-14 animate-spin place-items-center rounded-full border-4 border-slate-200 border-t-orange-400 font-['DM_Mono',monospace] text-3xl leading-none font-bold motion-reduce:animate-none" aria-hidden="true" />
         <h2>メンバー情報を読み込んでいます</h2>
       </div>
     );
@@ -123,21 +122,21 @@ export function MembersOnlyDetail() {
 
   if (loadStatus === "not-found") {
     return (
-      <div className={styles.statePanel} role="alert">
-        <span className={styles.errorMark} aria-hidden="true">!</span>
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl" role="alert">
+        <span className="grid size-14 place-items-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2>メンバーが見つかりません</h2>
-        <Link className={styles.primaryLink} href="/members-only">一覧へ戻る</Link>
+        <Link className="min-w-44 cursor-pointer rounded-sm border-0 bg-[var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" href="/members-only">一覧へ戻る</Link>
       </div>
     );
   }
 
   if (loadStatus === "error" || !member) {
     return (
-      <div className={styles.statePanel} role="alert">
-        <span className={styles.errorMark} aria-hidden="true">!</span>
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl [&_p]:mt-0 [&_p]:mb-6 [&_p]:leading-relaxed [&_p]:text-slate-500" role="alert">
+        <span className="grid size-14 place-items-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2>メンバー情報を読み込めませんでした</h2>
         <p>時間をおいて、もう一度お試しください。</p>
-        <button className={styles.primaryButton} onClick={() => setReloadKey((key) => key + 1)}>
+        <button className="min-w-44 cursor-pointer rounded-sm border-0 bg-[var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 enabled:hover:-translate-y-px enabled:hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={() => setReloadKey((key) => key + 1)}>
           再読み込み
         </button>
       </div>
@@ -146,30 +145,30 @@ export function MembersOnlyDetail() {
 
   return (
     <>
-      <div className={styles.memberToolbar}>
+      <div className="mx-auto mt-6 flex max-w-4xl items-center justify-between gap-6 px-6 text-sm font-bold md:mt-9">
         <Link href="/members-only">← メンバー一覧</Link>
-        <button className={styles.logoutButton} onClick={logout}>ログアウト</button>
+        <button className="cursor-pointer rounded-sm border border-slate-200 bg-white px-3.5 py-2 font-bold text-slate-900 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={logout}>ログアウト</button>
       </div>
 
-      <section className="member-hero">
+      <section className="mx-auto grid max-w-4xl grid-cols-3 items-center gap-6 px-6 pt-16 pb-11 md:gap-14 md:pt-28 md:pb-20 [&>img]:w-full [&>img]:rounded-full [&>img]:bg-slate-200">
         <MemberIcon id={member.id} name={member.name} />
-        <div>
-          <p className="kicker">MEMBER PROFILE</p>
-          <h1>{member.name}</h1>
-          <p className="meta">
+        <div className="col-span-2">
+          <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">MEMBER PROFILE</p>
+          <h1 className="my-3 text-4xl tracking-tighter md:text-7xl">{member.name}</h1>
+          <p className="my-4 font-['DM_Mono',monospace] text-xs text-[var(--blue)]">
             第{member.generation}期 · {member.department.join(" / ")}
           </p>
           {member.roles.length > 0 && (
-            <p className={styles.roles}>
+            <p className="mb-2.5 inline-block bg-slate-100 px-2 py-1 text-xs leading-snug text-slate-900">
               {member.roles.map((role) => roleLabels[role] ?? role).join(" / ")}
             </p>
           )}
-          {member.profile && <p>{member.profile}</p>}
-          <div className={styles.externalLinks}>
+          {member.profile && <p className="my-4 max-w-lg text-base leading-loose">{member.profile}</p>}
+          <div className="flex flex-wrap gap-3.5">
             {member.links.map((link) => (
               <a
                 key={`${link.name}-${link.url}`}
-                className="external"
+                className="inline-block border-b text-sm font-bold text-[var(--blue)]"
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
@@ -181,11 +180,11 @@ export function MembersOnlyDetail() {
         </div>
       </section>
 
-      <section className="collection-main member-works">
-        <p className="kicker">WORKS BY {member.name.toUpperCase()}</p>
-        <h2>制作作品</h2>
+      <section className="mx-auto max-w-6xl border-t border-slate-200 px-6 pt-10 pb-28">
+        <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">WORKS BY {member.name.toUpperCase()}</p>
+        <h2 className="mt-3 mb-8 text-3xl leading-snug tracking-tighter md:text-5xl">制作作品</h2>
         {works.length === 0 ? (
-          <p className={styles.empty}>登録されている作品はありません。</p>
+          <p className="my-4 py-9 text-slate-500">登録されている作品はありません。</p>
         ) : (
           <MembersOnlyWorksBrowser
             references={works}

@@ -73,7 +73,7 @@ export function MembersOnlyWorksBrowser({
 
   return (
     <>
-      <div className="works-grid">
+      <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
         {references.map((reference, index) => (
           <WorkCard
             key={`${reference.workKind}-${reference.eventWorkId ?? reference.personalWorkId}-${index}`}

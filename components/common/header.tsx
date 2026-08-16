@@ -9,23 +9,23 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   return (
-    <header className="header">
-      <div className="nav-wrap">
-        <Link href="/" className="brand" onClick={close}>
+    <header className="sticky top-0 z-20 border-b-0 bg-slate-50/90 backdrop-blur-lg">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:h-20">
+        <Link href="/" className="flex items-center gap-3" onClick={close}>
           <img
-            className="header-icon"
+            className="size-8 object-contain"
             src={withBasePath("/images/aitc_logo_transparent_no_word_black.png")}
             alt=""
           />
           <Logo />
-          <small>
+          <small className="hidden font-['DM_Mono',monospace] text-xs leading-snug tracking-wide md:block">
             Alumni of Information
             <br />
             and Technology Club
           </small>
         </Link>
         <button
-          className="menu-button"
+          className="border-0 bg-transparent text-xl md:hidden"
           aria-label="メニューを開く"
           aria-expanded={open}
           onClick={() => setOpen(!open)}
@@ -33,23 +33,23 @@ export function Header() {
           ☰
         </button>
         <nav
-          className={open ? "nav open" : "nav"}
+          className={`${open ? "flex" : "hidden"} absolute top-16 right-0 left-0 flex-col items-start gap-5 bg-white px-6 py-5 text-base font-bold shadow-lg md:static md:flex md:flex-row md:items-center md:gap-8 md:bg-transparent md:p-0 md:shadow-none`}
           aria-label="メインナビゲーション"
         >
-          <Link href="/" onClick={close}>
+          <Link href="/" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
             トップ
           </Link>
-          <Link href="/event-works" onClick={close}>
+          <Link href="/event-works" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
             イベント作品集
           </Link>
-          <Link href="/personal-works" onClick={close}>
+          <Link href="/personal-works" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
             個人作品集
           </Link>
-          <Link href="/members-only" onClick={close}>
+          <Link href="/members-only" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
             部員向け
           </Link>
           <a
-            className="x-placeholder"
+            className="text-base hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
             href="https://x.com/AInfTechClub"
             target="_blank"
             rel="noreferrer"
@@ -59,6 +59,10 @@ export function Header() {
           </a>
         </nav>
       </div>
+      <span
+        className="pointer-events-none absolute right-0 bottom-0 left-0 h-0.5 bg-[var(--header-gradient)]"
+        aria-hidden="true"
+      />
     </header>
   );
 }

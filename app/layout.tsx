@@ -34,8 +34,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ja">
-      <body>{children}</body>
+    <html lang="ja" className="scroll-smooth">
+      <body className="m-0 bg-slate-50 font-['Noto_Sans_JP',sans-serif] leading-normal text-slate-900 [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold">
+        {children}
+      </body>
     </html>
   );
 }

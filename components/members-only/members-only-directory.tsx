@@ -19,8 +19,6 @@ import {
 } from "@/lib/members-only-api";
 import { MemberIcon } from "../member-icon";
 import { MembersOnlyAuthPanel } from "./members-only-auth-panel";
-import memberStyles from "../members.module.css";
-import styles from "./members-only.module.css";
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
 type FilterKey = "generation" | "department";
@@ -43,7 +41,7 @@ function MembersOnlyFilters({
   onFilterChange: (key: FilterKey, value: string) => void;
 }) {
   return (
-    <div className="filters">
+    <div className="flex flex-wrap gap-3.5 [&_label]:flex [&_label]:items-center [&_label]:gap-2 [&_label]:text-xs [&_label]:font-bold [&_select]:rounded-none [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:py-2 [&_select]:pr-8 [&_select]:pl-3 [&_select]:text-slate-900">
       <label>
         加入期
         <select
@@ -82,7 +80,7 @@ function MembersOnlyFilters({
 
 function MembersOnlyLogoutButton({ onLogout }: { onLogout: () => void }) {
   return (
-    <button className={styles.logoutButton} onClick={onLogout}>
+    <button className="cursor-pointer rounded-sm border border-slate-200 bg-white px-3.5 py-2 font-bold text-slate-900 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={onLogout}>
       ログアウト
     </button>
   );
@@ -92,20 +90,20 @@ function MembersOnlyMemberLink({ member }: { member: MembersOnlyMember }) {
   return (
     <Link
       href={`/members-only/members?id=${encodeURIComponent(member.id)}`}
-      className={memberStyles.card}
+      className="grid gap-6 border border-slate-200 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl focus-visible:-translate-y-1 focus-visible:border-blue-300 focus-visible:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400 max-md:grid-cols-3 max-md:items-start md:p-6 [&>img]:w-24 [&>img]:rounded-full [&>img]:bg-slate-200"
     >
       <MemberIcon id={member.id} name={member.name} />
-      <div>
-        <p className="eyebrow">{member.department.join(" / ")}</p>
-        <h3>{member.name}</h3>
-        <span className={memberStyles.cta}>プロフィールを見る →</span>
+      <div className="max-md:col-span-2">
+        <p className="mt-0.5 mb-1 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">{member.department.join(" / ")}</p>
+        <h3 className="mt-1 mb-2.5 text-2xl tracking-tighter">{member.name}</h3>
+        <span className="mt-2.5 block text-xs font-bold text-[var(--blue)] md:mt-5">プロフィールを見る →</span>
       </div>
     </Link>
   );
 }
 
 function MembersOnlyMemberGroupRoot({ children }: { children: ReactNode }) {
-  return <section className={memberStyles.group}>{children}</section>;
+  return <section className="min-w-0">{children}</section>;
 }
 
 function MembersOnlyMemberGroupHeader({
@@ -120,10 +118,10 @@ function MembersOnlyMemberGroupHeader({
   children: ReactNode;
 }) {
   return (
-    <h2 className={memberStyles.groupHeading}>
+    <h2 className="mt-0 mb-5">
       <button
         type="button"
-        className={memberStyles.groupToggle}
+        className="flex w-full cursor-pointer items-center justify-between gap-4 border border-slate-200 bg-slate-100 px-4 py-3 text-left text-xl font-bold tracking-tighter text-slate-900 transition-colors duration-200 hover:border-blue-300 hover:bg-slate-200 hover:text-[var(--blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400 motion-reduce:transition-none md:text-2xl"
         aria-expanded={isExpanded}
         aria-controls={contentId}
         onClick={onToggle}
@@ -152,38 +150,20 @@ function MembersOnlyMemberGroupSection({
       {isExpanded && (
         <motion.div
           id={contentId}
-          className={memberStyles.groupContent}
+          className="overflow-hidden"
           initial={reduceMotion ? false : { height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : { duration: 0.2, ease: "easeOut" }
-          }
+          exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
         >
-          <div className={memberStyles.grid} style={{ position: "relative" }}>
+          <div className="relative grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             <AnimatePresence mode="popLayout">
               {items.map((item, index) => (
                 <motion.div
                   key={isValidElement(item) && item.key !== null ? item.key : index}
-                  layout
-                  initial={
-                    reduceMotion ? false : { opacity: 0, scale: 0.96 }
-                  }
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0 }
-                      : {
-                          duration: 0.16,
-                          layout: {
-                            duration: 0.25,
-                            ease: "easeOut",
-                          },
-                        }
-                  }
+                  layout={!reduceMotion}
+                  initial={reduceMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={reduceMotion ? undefined : { opacity: 0 }}
                 >
                   {item}
                 </motion.div>
@@ -216,11 +196,11 @@ function MembersOnlyList({
 }) {
   return (
     <>
-      <p className="count">{memberCount} members</p>
+      <p className="mt-10 mb-5 font-['DM_Mono',monospace] text-xs text-slate-500">{memberCount} members</p>
       {memberGroups.length === 0 ? (
-        <p className={memberStyles.empty}>該当するメンバーはいません。</p>
+        <p className="m-0 border border-slate-200 bg-white px-6 py-9 text-center text-slate-600">該当するメンバーはいません。</p>
       ) : (
-        <div className={memberStyles.groups}>
+        <div className="grid gap-10">
           {memberGroups.map((group) => {
             const isExpanded = !collapsedGenerations.has(group.generation);
             const contentId = `members-only-generation-${group.generation}`;
@@ -235,7 +215,7 @@ function MembersOnlyList({
                   <span>
                     {group.generation}期生 ({group.members.length})
                   </span>
-                  <span className={memberStyles.chevron} aria-hidden="true">
+                  <span className={`shrink-0 text-xl leading-none text-[var(--blue)] transition-transform duration-200 motion-reduce:transition-none ${isExpanded ? "" : "-rotate-90"}`} aria-hidden="true">
                     ↓
                   </span>
                 </MembersOnlyMemberGroup.Header>
@@ -360,8 +340,8 @@ export function MembersOnlyDirectory() {
 
   if (loadStatus === "loading" || loadStatus === "idle") {
     return (
-      <div className={styles.statePanel} aria-live="polite">
-        <span className={styles.indicator} aria-hidden="true" />
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl">
+        <span className="grid size-14 animate-spin place-items-center rounded-full border-4 border-slate-200 border-t-orange-400 font-['DM_Mono',monospace] text-3xl leading-none font-bold motion-reduce:animate-none" aria-hidden="true" />
         <h2>メンバー一覧を読み込んでいます</h2>
       </div>
     );
@@ -369,11 +349,11 @@ export function MembersOnlyDirectory() {
 
   if (loadStatus === "error") {
     return (
-      <div className={styles.statePanel} role="alert">
-        <span className={styles.errorMark} aria-hidden="true">!</span>
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl [&_p]:mt-0 [&_p]:mb-6 [&_p]:leading-relaxed [&_p]:text-slate-500" role="alert">
+        <span className="grid size-14 place-items-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2>メンバー一覧を読み込めませんでした</h2>
         <p>時間をおいて、もう一度お試しください。</p>
-        <button className={styles.primaryButton} onClick={() => setReloadKey((key) => key + 1)}>
+        <button className="min-w-44 cursor-pointer rounded-sm border-0 bg-[var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 enabled:hover:-translate-y-px enabled:hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={() => setReloadKey((key) => key + 1)}>
           再読み込み
         </button>
       </div>
@@ -381,8 +361,8 @@ export function MembersOnlyDirectory() {
   }
 
   return (
-    <section className={memberStyles.main}>
-      <div className={styles.toolbar}>
+    <section className="mx-auto max-w-6xl px-6 pt-12 pb-28">
+      <div className="flex flex-col-reverse items-start justify-between gap-6 md:flex-row">
         <MembersOnlyFilters
           generations={generations}
           departments={departments}
