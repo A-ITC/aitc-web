@@ -27,6 +27,13 @@ type MemberGroup = {
   members: MembersOnlyMember[];
 };
 
+const filterLabelClassName = "flex items-center gap-2 text-xs font-bold";
+const filterSelectClassName =
+  "rounded-none border border-slate-200 bg-white py-2 pr-8 pl-3 text-slate-900";
+const stateHeadingClassName =
+  "mt-5 mb-2.5 text-2xl tracking-tighter md:text-3xl";
+const stateDescriptionClassName = "mt-0 mb-6 leading-relaxed text-slate-500";
+
 function MembersOnlyFilters({
   generations,
   departments,
@@ -40,40 +47,45 @@ function MembersOnlyFilters({
   department: string;
   onFilterChange: (key: FilterKey, value: string) => void;
 }) {
+  const filters = [
+    {
+      key: "generation" as const,
+      label: "加入期",
+      value: generation,
+      options: generations.map((value) => ({
+        value: String(value),
+        label: `${value}期生`,
+      })),
+    },
+    {
+      key: "department" as const,
+      label: "所属部門",
+      value: department,
+      options: departments.map((value) => ({ value, label: value })),
+    },
+  ];
+
   return (
-    <div className="flex flex-wrap gap-3.5 [&_label]:flex [&_label]:items-center [&_label]:gap-2 [&_label]:text-xs [&_label]:font-bold [&_select]:rounded-none [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:py-2 [&_select]:pr-8 [&_select]:pl-3 [&_select]:text-slate-900">
-      <label>
-        加入期
-        <select
-          value={generation}
-          onChange={(event) =>
-            onFilterChange("generation", event.target.value)
-          }
-        >
-          <option value="all">すべて</option>
-          {generations.map((value) => (
-            <option key={value} value={value}>
-              {value}期生
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        所属部門
-        <select
-          value={department}
-          onChange={(event) =>
-            onFilterChange("department", event.target.value)
-          }
-        >
-          <option value="all">すべて</option>
-          {departments.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
-      </label>
+    <div className="flex flex-wrap gap-3.5">
+      {filters.map((filter) => (
+        <label className={filterLabelClassName} key={filter.key}>
+          {filter.label}
+          <select
+            className={filterSelectClassName}
+            value={filter.value}
+            onChange={(event) =>
+              onFilterChange(filter.key, event.target.value)
+            }
+          >
+            <option value="all">すべて</option>
+            {filter.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
     </div>
   );
 }
@@ -90,9 +102,9 @@ function MembersOnlyMemberLink({ member }: { member: MembersOnlyMember }) {
   return (
     <Link
       href={`/members-only/members?id=${encodeURIComponent(member.id)}`}
-      className="grid gap-6 border border-slate-200 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl focus-visible:-translate-y-1 focus-visible:border-blue-300 focus-visible:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400 max-md:grid-cols-3 max-md:items-start md:p-6 [&>img]:w-24 [&>img]:rounded-full [&>img]:bg-slate-200"
+      className="grid gap-6 border border-slate-200 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl focus-visible:-translate-y-1 focus-visible:border-blue-300 focus-visible:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400 max-md:grid-cols-3 max-md:items-start md:p-6"
     >
-      <MemberIcon id={member.id} name={member.name} />
+      <MemberIcon className="w-24 rounded-full bg-slate-200" id={member.id} name={member.name} />
       <div className="max-md:col-span-2">
         <p className="mt-0.5 mb-1 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">{member.department.join(" / ")}</p>
         <h3 className="mt-1 mb-2.5 text-2xl tracking-tighter">{member.name}</h3>
@@ -340,20 +352,20 @@ export function MembersOnlyDirectory() {
 
   if (loadStatus === "loading" || loadStatus === "idle") {
     return (
-      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl">
-        <span className="grid size-14 animate-spin place-items-center rounded-full border-4 border-slate-200 border-t-orange-400 font-['DM_Mono',monospace] text-3xl leading-none font-bold motion-reduce:animate-none" aria-hidden="true" />
-        <h2>メンバー一覧を読み込んでいます</h2>
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12">
+        <span className="size-14 animate-spin rounded-full border-4 border-slate-200 border-t-orange-400 font-['DM_Mono',monospace] text-3xl leading-none font-bold motion-reduce:animate-none" aria-hidden="true" />
+        <h2 className={stateHeadingClassName}>メンバー一覧を読み込んでいます</h2>
       </div>
     );
   }
 
   if (loadStatus === "error") {
     return (
-      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12 [&_h2]:mt-5 [&_h2]:mb-2.5 [&_h2]:text-2xl [&_h2]:tracking-tighter md:[&_h2]:text-3xl [&_p]:mt-0 [&_p]:mb-6 [&_p]:leading-relaxed [&_p]:text-slate-500" role="alert">
-        <span className="grid size-14 place-items-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
-        <h2>メンバー一覧を読み込めませんでした</h2>
-        <p>時間をおいて、もう一度お試しください。</p>
-        <button className="min-w-44 cursor-pointer rounded-sm border-0 bg-[var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 enabled:hover:-translate-y-px enabled:hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={() => setReloadKey((key) => key + 1)}>
+      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12" role="alert">
+        <span className="flex size-14 items-center justify-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
+        <h2 className={stateHeadingClassName}>メンバー一覧を読み込めませんでした</h2>
+        <p className={stateDescriptionClassName}>時間をおいて、もう一度お試しください。</p>
+        <button className="min-w-44 cursor-pointer rounded-sm border-0 bg-[image:var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 enabled:hover:-translate-y-px enabled:hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={() => setReloadKey((key) => key + 1)}>
           再読み込み
         </button>
       </div>

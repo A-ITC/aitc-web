@@ -9,7 +9,7 @@ export function HomePage() {
       <section className="mx-auto max-w-6xl px-6 pt-24 pb-16 max-md:py-20">
         <div>
           <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">ALUMNI OF INFORMATION AND TECHNOLOGY CLUB</p>
-          <h1 className="mt-3.5 mb-6 flex items-center gap-5 [&>span]:text-7xl [&>span]:tracking-tighter md:[&>span]:text-8xl">
+          <h1 className="mt-3.5 mb-6 flex items-center gap-5">
             <img
               className="h-16 w-16 object-contain md:h-24 md:w-24"
               src={withBasePath(
@@ -17,7 +17,7 @@ export function HomePage() {
               )}
               alt=""
             />
-            <Logo />
+            <Logo size="hero" />
           </h1>
         </div>
       </section>
@@ -56,12 +56,12 @@ export function HomePage() {
           <Link href="/event-works" className="flex min-h-64 flex-col items-start border-0 bg-slate-900 p-8 text-white transition duration-200 hover:-translate-y-1 hover:shadow-xl">
             <h3 className="mt-14 mb-1.5 text-3xl tracking-tighter">イベント作品集</h3>
             <p className="m-0 text-sm">イベントで頒布した、みんなの作品。</p>
-            <b className="mt-auto inline-block rounded-sm bg-[var(--accent-gradient)] px-5 py-3 text-xs text-black">見る →</b>
+            <b className="mt-auto inline-block rounded-sm bg-[image:var(--accent-gradient)] px-5 py-3 text-xs text-black">見る →</b>
           </Link>
           <Link href="/personal-works" className="flex min-h-64 flex-col items-start border-0 bg-slate-900 p-8 text-white transition duration-200 hover:-translate-y-1 hover:shadow-xl">
             <h3 className="mt-14 mb-1.5 text-3xl tracking-tighter">個人作品集</h3>
             <p className="m-0 text-sm">メンバーそれぞれの、日々の制作。</p>
-            <b className="mt-auto inline-block rounded-sm bg-[var(--accent-gradient)] px-5 py-3 text-xs text-black">見る →</b>
+            <b className="mt-auto inline-block rounded-sm bg-[image:var(--accent-gradient)] px-5 py-3 text-xs text-black">見る →</b>
           </Link>
         </div>
       </section>

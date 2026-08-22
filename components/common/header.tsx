@@ -36,20 +36,23 @@ export function Header() {
           className={`${open ? "flex" : "hidden"} absolute top-16 right-0 left-0 flex-col items-start gap-5 bg-white px-6 py-5 text-base font-bold shadow-lg md:static md:flex md:flex-row md:items-center md:gap-8 md:bg-transparent md:p-0 md:shadow-none`}
           aria-label="メインナビゲーション"
         >
-          <Link href="/" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
-            トップ
-          </Link>
-          <Link href="/event-works" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
-            イベント作品集
-          </Link>
-          <Link href="/personal-works" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
-            個人作品集
-          </Link>
-          <Link href="/members-only" className="hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent" onClick={close}>
-            部員向け
-          </Link>
+          {[
+            { href: "/", label: "トップ" },
+            { href: "/event-works", label: "イベント作品集" },
+            { href: "/personal-works", label: "個人作品集" },
+            { href: "/members-only", label: "部員向け" },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="hover:bg-[image:var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[image:var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
+              onClick={close}
+            >
+              {item.label}
+            </Link>
+          ))}
           <a
-            className="text-base hover:bg-[var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
+            className="text-base hover:bg-[image:var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[image:var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
             href="https://x.com/AInfTechClub"
             target="_blank"
             rel="noreferrer"
@@ -60,7 +63,7 @@ export function Header() {
         </nav>
       </div>
       <span
-        className="pointer-events-none absolute right-0 bottom-0 left-0 h-0.5 bg-[var(--header-gradient)]"
+        className="pointer-events-none absolute right-0 bottom-0 left-0 h-0.5 bg-[image:var(--header-gradient)]"
         aria-hidden="true"
       />
     </header>
