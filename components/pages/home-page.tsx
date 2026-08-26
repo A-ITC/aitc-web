@@ -2,14 +2,17 @@ import Link from "next/link";
 import { withBasePath } from "../data";
 import { EventTimeline } from "../event-timeline";
 import { Layout, Logo } from "../common/layout";
+import { PageHead } from "../common/page-head";
 
 export function HomePage() {
   return (
     <Layout>
-      <section className="mx-auto max-w-6xl px-6 pt-24 pb-16 max-md:py-20">
-        <div>
-          <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">ALUMNI OF INFORMATION AND TECHNOLOGY CLUB</p>
-          <h1 className="mt-3.5 mb-6 flex items-center gap-5">
+      <PageHead>
+        <PageHead.Kicker>
+          ALUMNI OF INFORMATION AND TECHNOLOGY CLUB
+        </PageHead.Kicker>
+        <PageHead.Title>
+          <span className="flex items-center gap-5">
             <img
               className="h-16 w-16 object-contain md:h-24 md:w-24"
               src={withBasePath(
@@ -18,9 +21,9 @@ export function HomePage() {
               alt=""
             />
             <Logo size="hero" />
-          </h1>
-        </div>
-      </section>
+          </span>
+        </PageHead.Title>
+      </PageHead>
       <section className="mx-auto grid max-w-6xl grid-cols-1 gap-5 border-t border-slate-200 px-6 py-16 md:grid-cols-2 md:gap-10 md:py-28">
         <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)] md:col-span-2">ABOUT AITC</p>
         <h2 className="m-0 text-3xl leading-snug tracking-tighter md:text-5xl">AITCについて</h2>

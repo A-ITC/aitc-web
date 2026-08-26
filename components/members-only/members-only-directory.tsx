@@ -7,18 +7,19 @@ import {
   Children,
   isValidElement,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import { useDiscordAuth } from "@/lib/discord-auth";
 import {
   fetchMembersOnlyMembers,
   MembersOnlyApiError,
   type MembersOnlyMember,
 } from "@/lib/members-only-api";
 import { MemberIcon } from "../member-icon";
-import { MembersOnlyAuthPanel } from "./members-only-auth-panel";
+import { MembersOnlyPanel } from "./members-only-panel";
+import { MembersOnlySpinner } from "./members-only-spinner";
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
 type FilterKey = "generation" | "department";
@@ -33,6 +34,123 @@ const filterSelectClassName =
 const stateHeadingClassName =
   "mt-5 mb-2.5 text-2xl tracking-tighter md:text-3xl";
 const stateDescriptionClassName = "mt-0 mb-6 leading-relaxed text-slate-500";
+
+function useCollapsedGenerations() {
+  const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
+    new Set(),
+  );
+  const resetCollapsedGenerations = useCallback(() => {
+    setCollapsedGenerations(new Set());
+  }, []);
+  const toggleGeneration = useCallback((value: number) => {
+    setCollapsedGenerations((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  }, []);
+
+  return {
+    collapsedGenerations,
+    resetCollapsedGenerations,
+    toggleGeneration,
+  };
+}
+
+function useMembersOnlyFilters(
+  members: MembersOnlyMember[],
+  resetCollapsedGenerations: () => void,
+  router: ReturnType<typeof useRouter>,
+  params: ReturnType<typeof useSearchParams>,
+) {
+  const queryString = params.toString();
+
+  const generations = useMemo(
+    () =>
+      [...new Set(members.map((member) => member.generation))].sort(
+        (a, b) => a - b,
+      ),
+    [members],
+  );
+  const departments = useMemo(
+    () => [...new Set(members.flatMap((member) => member.department))].sort(),
+    [members],
+  );
+
+  const rawGeneration = params.get("generation");
+  const generation =
+    rawGeneration && generations.includes(Number(rawGeneration))
+      ? rawGeneration
+      : "all";
+  const rawDepartment = params.get("department");
+  const department =
+    rawDepartment && departments.includes(rawDepartment)
+      ? rawDepartment
+      : "all";
+
+  const setFilter = useCallback(
+    (key: FilterKey, value: string) => {
+      const next = new URLSearchParams(queryString);
+      if (value === "all") next.delete(key);
+      else next.set(key, value);
+      resetCollapsedGenerations();
+      router.push(
+        `/members-only${next.size ? `?${next.toString()}` : ""}`,
+        { scroll: false },
+      );
+    },
+    [queryString, resetCollapsedGenerations, router],
+  );
+
+  return {
+    generations,
+    departments,
+    generation,
+    department,
+    setFilter,
+  };
+}
+
+function useMembersOnlyDirectory({
+  accessToken,
+  invalidateAuthentication,
+  reloadKey,
+}: {
+  accessToken: string;
+  invalidateAuthentication: () => void;
+  reloadKey: number;
+}) {
+  const [members, setMembers] = useState<MembersOnlyMember[]>([]);
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoadStatus("loading");
+
+    void fetchMembersOnlyMembers(accessToken, controller.signal)
+      .then((items) => {
+        setMembers(items);
+        setLoadStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (
+          error instanceof MembersOnlyApiError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          invalidateAuthentication();
+          setLoadStatus("idle");
+          return;
+        }
+        setLoadStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [accessToken, invalidateAuthentication, reloadKey]);
+
+  return { members, loadStatus };
+}
 
 function MembersOnlyFilters({
   generations,
@@ -87,14 +205,6 @@ function MembersOnlyFilters({
         </label>
       ))}
     </div>
-  );
-}
-
-function MembersOnlyLogoutButton({ onLogout }: { onLogout: () => void }) {
-  return (
-    <button className="cursor-pointer rounded-sm border border-slate-200 bg-white px-3.5 py-2 font-bold text-slate-900 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={onLogout}>
-      ログアウト
-    </button>
   );
 }
 
@@ -249,67 +359,41 @@ function MembersOnlyList({
   );
 }
 
-export function MembersOnlyDirectory() {
+export function MembersOnlyDirectory({
+  accessToken,
+  invalidateAuthentication,
+}: {
+  accessToken: string;
+  invalidateAuthentication: () => void;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const reduceMotion = useReducedMotion();
   const {
-    accessToken,
-    status: authStatus,
-    startAuthentication,
-    logout,
-    invalidateAuthentication,
-  } = useDiscordAuth();
-  const [members, setMembers] = useState<MembersOnlyMember[]>([]);
-  const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
-    new Set(),
-  );
-  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
+    collapsedGenerations,
+    resetCollapsedGenerations,
+    toggleGeneration,
+  } = useCollapsedGenerations();
   const [reloadKey, setReloadKey] = useState(0);
+  const { members, loadStatus } = useMembersOnlyDirectory({
+    accessToken,
+    invalidateAuthentication,
+    reloadKey,
+  });
 
-  useEffect(() => {
-    if (authStatus !== "authenticated" || !accessToken) return;
-
-    const controller = new AbortController();
-    setLoadStatus("loading");
-
-    void fetchMembersOnlyMembers(accessToken, controller.signal)
-      .then((items) => {
-        setMembers(items);
-        setLoadStatus("ready");
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (
-          error instanceof MembersOnlyApiError &&
-          (error.status === 401 || error.status === 403)
-        ) {
-          invalidateAuthentication();
-          setLoadStatus("idle");
-          return;
-        }
-        setLoadStatus("error");
-      });
-
-    return () => controller.abort();
-  }, [accessToken, authStatus, invalidateAuthentication, reloadKey]);
-
-  const generations = useMemo(
-    () => [...new Set(members.map((member) => member.generation))].sort((a, b) => a - b),
-    [members],
+  const {
+    generations,
+    departments,
+    generation,
+    department,
+    setFilter
+  } = useMembersOnlyFilters(
+    members,
+    resetCollapsedGenerations,
+    router,
+    params,
   );
-  const departments = useMemo(
-    () => [...new Set(members.flatMap((member) => member.department))].sort(),
-    [members],
-  );
-  const rawGeneration = params.get("generation");
-  const generation =
-    rawGeneration && generations.includes(Number(rawGeneration))
-      ? rawGeneration
-      : "all";
-  const rawDepartment = params.get("department");
-  const department =
-    rawDepartment && departments.includes(rawDepartment) ? rawDepartment : "all";
+
   const visibleMembers = members.filter(
     (member) =>
       (generation === "all" || member.generation === Number(generation)) &&
@@ -323,67 +407,37 @@ export function MembersOnlyDirectory() {
     .filter((group) => group.members.length > 0)
     .sort((a, b) => b.generation - a.generation);
 
-  const setFilter = (key: FilterKey, value: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (value === "all") next.delete(key);
-    else next.set(key, value);
-    setCollapsedGenerations(new Set());
-    router.push(`/members-only${next.size ? `?${next.toString()}` : ""}`, {
-      scroll: false,
-    });
-  };
-  const toggleGeneration = (value: number) => {
-    setCollapsedGenerations((current) => {
-      const next = new Set(current);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
-  };
-
-  if (authStatus !== "authenticated") {
-    return (
-      <MembersOnlyAuthPanel
-        status={authStatus}
-        onAuthenticate={startAuthentication}
-      />
-    );
-  }
-
   if (loadStatus === "loading" || loadStatus === "idle") {
     return (
-      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12">
-        <span className="size-14 animate-spin rounded-full border-4 border-slate-200 border-t-orange-400 font-['DM_Mono',monospace] text-3xl leading-none font-bold motion-reduce:animate-none" aria-hidden="true" />
+      <MembersOnlyPanel>
+        <MembersOnlySpinner />
         <h2 className={stateHeadingClassName}>メンバー一覧を読み込んでいます</h2>
-      </div>
+      </MembersOnlyPanel>
     );
   }
 
   if (loadStatus === "error") {
     return (
-      <div className="mx-5 mt-11 mb-20 flex min-h-72 w-auto flex-col items-center justify-center border border-slate-200 bg-white px-6 py-10 text-center shadow-xl md:mx-auto md:mb-28 md:w-full md:max-w-3xl md:px-9 md:py-12" role="alert">
+      <MembersOnlyPanel role="alert">
         <span className="flex size-14 items-center justify-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2 className={stateHeadingClassName}>メンバー一覧を読み込めませんでした</h2>
         <p className={stateDescriptionClassName}>時間をおいて、もう一度お試しください。</p>
         <button className="min-w-44 cursor-pointer rounded-sm border-0 bg-[image:var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 enabled:hover:-translate-y-px enabled:hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" onClick={() => setReloadKey((key) => key + 1)}>
           再読み込み
         </button>
-      </div>
+      </MembersOnlyPanel>
     );
   }
 
   return (
     <section className="mx-auto max-w-6xl px-6 pt-12 pb-28">
-      <div className="flex flex-col-reverse items-start justify-between gap-6 md:flex-row">
-        <MembersOnlyFilters
-          generations={generations}
-          departments={departments}
-          generation={generation}
-          department={department}
-          onFilterChange={setFilter}
-        />
-        <MembersOnlyLogoutButton onLogout={logout} />
-      </div>
+      <MembersOnlyFilters
+        generations={generations}
+        departments={departments}
+        generation={generation}
+        department={department}
+        onFilterChange={setFilter}
+      />
       <MembersOnlyList
         memberGroups={memberGroups}
         memberCount={visibleMembers.length}
