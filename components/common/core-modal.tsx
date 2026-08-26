@@ -54,7 +54,7 @@ export function CoreModal({
 
   return (
     <div
-      className="overlay"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-slate-950/80 p-6"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -62,14 +62,14 @@ export function CoreModal({
     >
       <section
         ref={modalRef}
-        className="modal"
+        className="relative my-auto w-full max-w-3xl animate-[rise_0.2s_ease-out] bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabelledBy}
       >
         <button
           ref={closeRef}
-          className="close"
+          className="absolute top-2.5 right-3 z-10 size-9 cursor-pointer rounded-full border-0 bg-white text-2xl text-slate-900"
           onClick={onClose}
           aria-label="閉じる"
         >

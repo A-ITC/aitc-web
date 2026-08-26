@@ -15,6 +15,17 @@ import {
 import { WorkCard, WorkModal } from "./work-ui";
 
 const AITC_WORK_ID_PREFIX = "aitc_";
+const filterLabelClassName = "flex items-center gap-2 text-xs font-bold";
+const filterSelectClassName =
+  "rounded-none border border-slate-200 bg-white py-2 pr-8 pl-3 text-slate-900";
+
+type FilterKey = "year" | "author" | "event" | "type" | "sort";
+type FilterDefinition = {
+  key: FilterKey;
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+};
 
 const valid = (value: string | null, values: string[]) =>
   value && values.includes(value) ? value : "all";
@@ -85,7 +96,7 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
   const sort = valid(searchParams.get("sort"), ["new", "old", "title"]);
 
   const setFilter = (
-    key: "year" | "author" | "event" | "type" | "sort",
+    key: FilterKey,
     value: string,
   ) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -122,108 +133,102 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
     [author, eventName, kind, sort, type, works, year],
   );
 
+  const filters: FilterDefinition[] = [
+    {
+      key: "year",
+      label: "年",
+      value: year,
+      options: [
+        { value: "all", label: "すべて" },
+        ...years.map((value) => ({ value, label: value })),
+      ],
+    },
+    ...(kind === "event"
+      ? [
+          {
+            key: "event" as const,
+            label: "イベント",
+            value: eventName,
+            options: [
+              { value: "all", label: "すべて" },
+              ...events.map((value) => ({ value, label: value })),
+            ],
+          },
+        ]
+      : [
+          {
+            key: "author" as const,
+            label: "作者",
+            value: author,
+            options: [
+              { value: "all", label: "すべて" },
+              ...members.map((member) => ({
+                value: member.id,
+                label: member.name,
+              })),
+            ],
+          },
+        ]),
+    {
+      key: "type",
+      label: "タイプ",
+      value: type,
+      options: [
+        { value: "all", label: "すべて" },
+        ...types.map((value) => ({ value, label: typeLabel[value] })),
+      ],
+    },
+    {
+      key: "sort",
+      label: "並び順",
+      value: sort,
+      options: [
+        { value: "new", label: "新しい順" },
+        { value: "old", label: "古い順" },
+        { value: "title", label: "タイトル順" },
+      ],
+    },
+  ];
+
   if (loading)
-    return <section className="collection-main">読み込み中…</section>;
+    return <section className="mx-auto max-w-6xl px-6 pt-10 pb-28">読み込み中…</section>;
   if (error)
     return (
-      <section className="collection-main">
+      <section className="mx-auto max-w-6xl px-6 pt-10 pb-28">
         データを取得できませんでした。
       </section>
     );
 
   return (
-    <section className="collection-main">
-      <div className="filters">
-        <label>
-          年
-          <select
-            value={year}
-            onChange={(e) => setFilter("year", e.target.value)}
-          >
-            <option value="all">すべて</option>
-            {years.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-        {kind === "event" && (
-          <label>
-            イベント
+    <section className="mx-auto max-w-6xl px-6 pt-10 pb-28">
+      <div className="flex flex-wrap gap-3.5">
+        {filters.map((filter) => (
+          <label className={filterLabelClassName} key={filter.key}>
+            {filter.label}
             <select
-              value={eventName}
-              onChange={(e) => setFilter("event", e.target.value)}
+              className={filterSelectClassName}
+              value={filter.value}
+              onChange={(event) => setFilter(filter.key, event.target.value)}
             >
-              <option value="all">すべて</option>
-              {events.map((value) => (
-                <option key={value} value={value}>
-                  {value}
+              {filter.options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
           </label>
-        )}
-        {kind === "personal" && (
-          <label>
-            作者
-            <select
-              value={author}
-              onChange={(e) => setFilter("author", e.target.value)}
-            >
-              <option value="all">すべて</option>
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label>
-          タイプ
-          <select
-            value={type}
-            onChange={(e) => setFilter("type", e.target.value)}
-          >
-            <option value="all">すべて</option>
-            {types.map((value) => (
-              <option key={value} value={value}>
-                {typeLabel[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          並び順
-          <select
-            value={sort}
-            onChange={(e) => setFilter("sort", e.target.value)}
-          >
-            <option value="new">新しい順</option>
-            <option value="old">古い順</option>
-            <option value="title">タイトル順</option>
-          </select>
-        </label>
+        ))}
       </div>
-      <p className="count">{visibleWorks.length} works</p>
-      <div className="works-grid" style={{ position: "relative" }}>
+      <p className="mt-10 mb-5 font-['DM_Mono',monospace] text-xs text-slate-500">{visibleWorks.length} works</p>
+      <div className="relative grid grid-cols-2 gap-3.5 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
         <AnimatePresence mode="popLayout">
           {visibleWorks.map((work) => (
             <motion.div
               key={work.id}
-              layout
-              initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      duration: 0.16,
-                      layout: { duration: 0.25, ease: "easeOut" },
-                    }
-              }
+              layout={!reduceMotion}
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
             >
               <WorkCard
                 work={work}

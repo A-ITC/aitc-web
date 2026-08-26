@@ -19,18 +19,19 @@ export function EventTimeline() {
   ].sort((a, b) => b[1] - a[1]);
 
   return (
-    <section className="section timeline">
-      <p className="kicker">EVENT HISTORY</p>
-      <h2>イベント年表</h2>
-      <div>
+    <section className="mx-auto max-w-6xl px-6 py-16 md:py-28">
+      <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">EVENT HISTORY</p>
+      <h2 className="mt-3 mb-8 text-3xl leading-snug tracking-tighter md:text-5xl">イベント年表</h2>
+      <div className="border-t border-slate-200">
         {events.map(([event, year]) => (
           <Link
             key={event}
             href={`/event-works?event=${encodeURIComponent(event)}`}
+            className="grid grid-cols-12 border-b border-slate-200 px-1 py-5 transition-all duration-200 hover:pl-3 hover:text-[var(--blue)]"
           >
-            <b>{year}</b>
-            <span>{event}</span>
-            <i>→</i>
+            <b className="col-span-3 font-['DM_Mono',monospace] text-base">{year}</b>
+            <span className="col-span-8">{event}</span>
+            <i className="col-span-1 not-italic">→</i>
           </Link>
         ))}
       </div>
