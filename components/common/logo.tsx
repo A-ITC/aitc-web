@@ -1,6 +1,7 @@
 const logoSizeClasses = {
   default: "text-2xl",
   hero: "text-7xl md:text-8xl",
+  display: "text-[clamp(5rem,16vw,8rem)]",
 } as const;
 
 export function Logo({ size = "default" }: { size?: keyof typeof logoSizeClasses }) {
