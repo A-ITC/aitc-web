@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import { Logo } from "./logo";
 import { withBasePath } from "../data";
 
@@ -39,7 +41,7 @@ export function Header() {
           {[
             { href: "/", label: "トップ" },
             { href: "/event-works", label: "イベント作品集" },
-            { href: "/personal-works", label: "個人作品集" },
+            //{ href: "/personal-works", label: "個人作品集" },
             { href: "/members-only", label: "部員向け" },
           ].map((item) => (
             <Link
@@ -52,13 +54,18 @@ export function Header() {
             </Link>
           ))}
           <a
-            className="text-base hover:bg-[image:var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[image:var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
+            className="group inline-flex items-center gap-1.5 text-base hover:bg-[image:var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[image:var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
             href="https://x.com/AInfTechClub"
             target="_blank"
             rel="noreferrer"
             aria-label="AITC公式Xを開く"
           >
-            𝕏
+            <span>𝕏</span>
+            <FontAwesomeIcon
+              icon={faArrowUpRightFromSquare}
+              className="h-3 w-3 text-slate-900 group-hover:text-[var(--blue)] group-focus-visible:text-[var(--blue)]"
+              aria-hidden="true"
+            />
           </a>
         </nav>
       </div>
