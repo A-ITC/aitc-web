@@ -1,20 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { fetchEventWorks, fetchMembers, fetchPersonalWorks } from "@/lib/api";
 import {
   CollectionKind,
   EventWork,
-  Member,
   PersonalWork,
   typeLabel,
   Work,
 } from "./data";
+import { useCollectionData } from "./hooks";
 import { WorkCard, WorkModal } from "./work-ui";
 
-const AITC_WORK_ID_PREFIX = "aitc_";
 const filterLabelClassName = "flex items-center gap-2 text-xs font-bold";
 const filterSelectClassName =
   "rounded-none border border-slate-200 bg-white py-2 pr-8 pl-3 text-slate-900";
@@ -36,40 +34,7 @@ export function CollectionBrowser({ kind }: { kind: CollectionKind }) {
   const searchParams = useSearchParams();
   const reduceMotion = useReducedMotion();
   const [selected, setSelected] = useState<Work | null>(null);
-  const [works, setWorks] = useState<Work[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    Promise.all([
-      kind === "event" ? fetchEventWorks() : fetchPersonalWorks(),
-      fetchMembers(),
-    ])
-      .then(([nextWorks, nextMembers]) => {
-        if (cancelled) return;
-        setWorks(
-          kind === "event"
-            ? nextWorks.filter((work) =>
-                work.id.startsWith(AITC_WORK_ID_PREFIX),
-              )
-            : nextWorks,
-        );
-        setMembers(nextMembers);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [kind]);
+  const { works, members, loading, error } = useCollectionData(kind);
 
   const eventWorks = works as EventWork[];
   const personalWorks = works as PersonalWork[];
