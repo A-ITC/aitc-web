@@ -2,17 +2,10 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import {
-  fetchMembersOnlyMember,
-  fetchMembersOnlyMembers,
-  fetchMembersOnlyMemberWorks,
-  MembersOnlyApiError,
-  type MembersOnlyMember,
-  type MemberRole,
-  type MemberWorkReference,
-} from "@/lib/members-only-api";
+import { useState } from "react";
+import { type MemberRole } from "@/lib/members-only-api";
 import { MemberIcon } from "../member-icon";
+import { useMembersOnlyDetail } from "./hooks";
 import { MembersOnlyPanel } from "./members-only-panel";
 import { MembersOnlySpinner } from "./members-only-spinner";
 
@@ -20,8 +13,6 @@ const stateHeadingClassName =
   "mt-5 mb-2.5 text-2xl tracking-tighter md:text-3xl";
 const stateDescriptionClassName = "mt-0 mb-6 leading-relaxed text-slate-500";
 import { MembersOnlyWorksBrowser } from "./members-only-works-browser";
-
-type LoadStatus = "idle" | "loading" | "ready" | "not-found" | "error";
 
 const roleLabels: Record<MemberRole, string> = {
   REPRESENTATIVE: "代表",
@@ -36,61 +27,6 @@ function validMemberId(values: string[]): string | null {
   const id = values[0];
   if (!id || id.length > 128 || /[\/\\?#\x00-\x1f]/.test(id)) return null;
   return id;
-}
-
-function useMembersOnlyDetail({
-  memberId,
-  accessToken,
-  invalidateAuthentication,
-  reloadKey,
-}: {
-  memberId: string | null;
-  accessToken: string;
-  invalidateAuthentication: () => void;
-  reloadKey: number;
-}) {
-  const [member, setMember] = useState<MembersOnlyMember | null>(null);
-  const [works, setWorks] = useState<MemberWorkReference[]>([]);
-  const [directory, setDirectory] = useState<MembersOnlyMember[]>([]);
-  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
-
-  useEffect(() => {
-    if (!memberId) return;
-
-    const controller = new AbortController();
-    setLoadStatus("loading");
-
-    void Promise.all([
-      fetchMembersOnlyMember(memberId, accessToken, controller.signal),
-      fetchMembersOnlyMembers(accessToken, controller.signal),
-      fetchMembersOnlyMemberWorks(memberId, accessToken, controller.signal),
-    ])
-      .then(([memberResponse, directoryResponse, worksResponse]) => {
-        setMember(memberResponse);
-        setDirectory(directoryResponse);
-        setWorks(worksResponse);
-        setLoadStatus("ready");
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (error instanceof MembersOnlyApiError) {
-          if (error.status === 401 || error.status === 403) {
-            invalidateAuthentication();
-            setLoadStatus("idle");
-            return;
-          }
-          if (error.status === 404) {
-            setLoadStatus("not-found");
-            return;
-          }
-        }
-        setLoadStatus("error");
-      });
-
-    return () => controller.abort();
-  }, [accessToken, invalidateAuthentication, memberId, reloadKey]);
-
-  return { loadStatus, member, works, directory };
 }
 
 export function MembersOnlyDetail({

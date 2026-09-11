@@ -7,21 +7,18 @@ import {
   Children,
   isValidElement,
   type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
   useState,
 } from "react";
-import {
-  fetchMembersOnlyMembers,
-  MembersOnlyApiError,
-  type MembersOnlyMember,
-} from "@/lib/members-only-api";
+import { type MembersOnlyMember } from "@/lib/members-only-api";
 import { MemberIcon } from "../member-icon";
+import {
+  useCollapsedGenerations,
+  useMembersOnlyDirectory,
+  useMembersOnlyFilters,
+} from "./hooks";
 import { MembersOnlyPanel } from "./members-only-panel";
 import { MembersOnlySpinner } from "./members-only-spinner";
 
-type LoadStatus = "idle" | "loading" | "ready" | "error";
 type FilterKey = "generation" | "department";
 type MemberGroup = {
   generation: number;
@@ -34,123 +31,6 @@ const filterSelectClassName =
 const stateHeadingClassName =
   "mt-5 mb-2.5 text-2xl tracking-tighter md:text-3xl";
 const stateDescriptionClassName = "mt-0 mb-6 leading-relaxed text-slate-500";
-
-function useCollapsedGenerations() {
-  const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
-    new Set(),
-  );
-  const resetCollapsedGenerations = useCallback(() => {
-    setCollapsedGenerations(new Set());
-  }, []);
-  const toggleGeneration = useCallback((value: number) => {
-    setCollapsedGenerations((current) => {
-      const next = new Set(current);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
-  }, []);
-
-  return {
-    collapsedGenerations,
-    resetCollapsedGenerations,
-    toggleGeneration,
-  };
-}
-
-function useMembersOnlyFilters(
-  members: MembersOnlyMember[],
-  resetCollapsedGenerations: () => void,
-  router: ReturnType<typeof useRouter>,
-  params: ReturnType<typeof useSearchParams>,
-) {
-  const queryString = params.toString();
-
-  const generations = useMemo(
-    () =>
-      [...new Set(members.map((member) => member.generation))].sort(
-        (a, b) => a - b,
-      ),
-    [members],
-  );
-  const departments = useMemo(
-    () => [...new Set(members.flatMap((member) => member.department))].sort(),
-    [members],
-  );
-
-  const rawGeneration = params.get("generation");
-  const generation =
-    rawGeneration && generations.includes(Number(rawGeneration))
-      ? rawGeneration
-      : "all";
-  const rawDepartment = params.get("department");
-  const department =
-    rawDepartment && departments.includes(rawDepartment)
-      ? rawDepartment
-      : "all";
-
-  const setFilter = useCallback(
-    (key: FilterKey, value: string) => {
-      const next = new URLSearchParams(queryString);
-      if (value === "all") next.delete(key);
-      else next.set(key, value);
-      resetCollapsedGenerations();
-      router.push(
-        `/members-only${next.size ? `?${next.toString()}` : ""}`,
-        { scroll: false },
-      );
-    },
-    [queryString, resetCollapsedGenerations, router],
-  );
-
-  return {
-    generations,
-    departments,
-    generation,
-    department,
-    setFilter,
-  };
-}
-
-function useMembersOnlyDirectory({
-  accessToken,
-  invalidateAuthentication,
-  reloadKey,
-}: {
-  accessToken: string;
-  invalidateAuthentication: () => void;
-  reloadKey: number;
-}) {
-  const [members, setMembers] = useState<MembersOnlyMember[]>([]);
-  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoadStatus("loading");
-
-    void fetchMembersOnlyMembers(accessToken, controller.signal)
-      .then((items) => {
-        setMembers(items);
-        setLoadStatus("ready");
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (
-          error instanceof MembersOnlyApiError &&
-          (error.status === 401 || error.status === 403)
-        ) {
-          invalidateAuthentication();
-          setLoadStatus("idle");
-          return;
-        }
-        setLoadStatus("error");
-      });
-
-    return () => controller.abort();
-  }, [accessToken, invalidateAuthentication, reloadKey]);
-
-  return { members, loadStatus };
-}
 
 function MembersOnlyFilters({
   generations,
