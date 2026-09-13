@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { withBasePath } from "../data";
 import { EventTimeline } from "../event-timeline";
+import { ActionButton } from "../common/action-button";
 import { Layout, Logo } from "../common/layout";
 
 const activities = [
@@ -97,7 +98,9 @@ export function HomePage() {
             <span className="relative z-10 flex w-full flex-col items-start">
               <h3 className="mt-0 mb-1.5 text-3xl tracking-tighter">イベント作品集</h3>
               <p className="m-0 text-sm">これまでイベントに出品した作品のデータベース</p>
-              <b className="mt-auto inline-block rounded-sm bg-[image:var(--accent-gradient)] px-5 py-3 text-base text-black underline underline-offset-2">見る →</b>
+              <ActionButton as="span" className="mt-auto">
+                見る →
+              </ActionButton>
             </span>
           </Link>
           {/*
