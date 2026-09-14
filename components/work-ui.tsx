@@ -57,6 +57,7 @@ export function WorkModal({
   members,
   onClose,
   memberHref,
+  loadDetail,
 }: {
   work: Work;
   kind: CollectionKind;
@@ -64,6 +65,7 @@ export function WorkModal({
   members: Member[];
   onClose: () => void;
   memberHref?: (id: string) => string;
+  loadDetail?: (id: string, signal: AbortSignal) => Promise<Work>;
 }) {
   const [detail, setDetail] = useState(work);
   const [detailError, setDetailError] = useState(false);
@@ -76,20 +78,27 @@ export function WorkModal({
     .slice(0, 3);
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
     setDetail(work);
     setDetailError(false);
-    fetchWorkDetail(kind, work.id)
+    const detailRequest = loadDetail
+      ? loadDetail(work.id, controller.signal)
+      : fetchWorkDetail(kind, work.id, controller.signal);
+
+    detailRequest
       .then((value) => {
         if (!cancelled) setDetail(value);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
         if (!cancelled) setDetailError(true);
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [kind, work]);
+  }, [kind, loadDetail, work]);
   const eventWork = isEventWork(detail) ? detail : null;
   const soundcloudLink =
     detail.type === "Music"

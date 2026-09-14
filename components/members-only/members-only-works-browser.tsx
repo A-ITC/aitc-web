@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { workThumbnailUrl } from "@/lib/api";
-import type {
-  MembersOnlyMember,
-  MemberWorkReference,
+import {
+  fetchMembersOnlyEventWork,
+  MembersOnlyApiError,
+  type MembersOnlyMember,
+  type MemberWorkReference,
 } from "@/lib/members-only-api";
 import type { Member, Work } from "../data";
 import { WorkCard, WorkModal } from "../work-ui";
@@ -59,10 +61,14 @@ export function MembersOnlyWorksBrowser({
   references,
   memberId,
   directory,
+  accessToken,
+  invalidateAuthentication,
 }: {
   references: MemberWorkReference[];
   memberId: string;
   directory: MembersOnlyMember[];
+  accessToken: string;
+  invalidateAuthentication: () => void;
 }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const works = references.map((reference) => toWork(reference, memberId));
@@ -70,6 +76,22 @@ export function MembersOnlyWorksBrowser({
   const selected = selectedIndex === null ? null : works[selectedIndex];
   const selectedReference =
     selectedIndex === null ? null : references[selectedIndex];
+  const loadEventWorkDetail = useCallback(
+    async (id: string, signal: AbortSignal) => {
+      try {
+        return await fetchMembersOnlyEventWork(id, accessToken, signal);
+      } catch (error) {
+        if (
+          error instanceof MembersOnlyApiError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          invalidateAuthentication();
+        }
+        throw error;
+      }
+    },
+    [accessToken, invalidateAuthentication],
+  );
 
   return (
     <>
@@ -90,6 +112,11 @@ export function MembersOnlyWorksBrowser({
           kind={selectedReference.workKind === "EVENT" ? "event" : "personal"}
           works={works}
           members={members}
+          loadDetail={
+            selectedReference.workKind === "EVENT"
+              ? loadEventWorkDetail
+              : undefined
+          }
           memberHref={(id) =>
             `/members-only/members/profile?id=${encodeURIComponent(id)}`
           }

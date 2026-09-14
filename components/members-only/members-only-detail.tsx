@@ -134,6 +134,8 @@ export function MembersOnlyDetail({
             references={works}
             memberId={member.id}
             directory={directory}
+            accessToken={accessToken}
+            invalidateAuthentication={invalidateAuthentication}
           />
         )}
       </section>

@@ -1,17 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { workThumbnailUrl } from "@/lib/api";
-import type { MembersOnlyMember } from "@/lib/members-only-api";
+import {
+  fetchMembersOnlyEventWork,
+  MembersOnlyApiError,
+  type MembersOnlyMember,
+} from "@/lib/members-only-api";
 import type { EventWork, Member } from "../data";
 import { typeLabel } from "../data";
 import { WorkCard, WorkModal } from "../work-ui";
-import {
-  type MembersOnlyEventWorkReference,
-  useMembersOnlyEventWorks,
-} from "./hooks";
+import { useMembersOnlyEventWorks } from "./hooks";
 import { MembersOnlyPanel } from "./members-only-panel";
 import { MembersOnlySpinner } from "./members-only-spinner";
 
@@ -45,21 +45,6 @@ function toMember(member: MembersOnlyMember): Member {
   };
 }
 
-function toEventWork(reference: MembersOnlyEventWorkReference): EventWork {
-  return {
-    id: reference.eventWorkId,
-    title: reference.eventWorkTitle ?? reference.title,
-    thumbnail: workThumbnailUrl(reference.eventWorkId),
-    type: reference.type ?? "Other",
-    creatorIds: reference.creatorIds ?? [],
-    description: reference.description ?? "",
-    event: reference.eventName ?? "",
-    year: Number(reference.releasedAt?.slice(0, 4)) || 0,
-    links: reference.links ?? [],
-    credits: [],
-  };
-}
-
 export function MembersOnlyEventWorksBrowser({
   accessToken,
   invalidateAuthentication,
@@ -73,13 +58,28 @@ export function MembersOnlyEventWorksBrowser({
   const reduceMotion = useReducedMotion();
   const [selected, setSelected] = useState<EventWork | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const { references, directory, loadStatus } = useMembersOnlyEventWorks({
+  const { works, directory, loadStatus } = useMembersOnlyEventWorks({
     accessToken,
     invalidateAuthentication,
     reloadKey,
   });
 
-  const works = useMemo(() => references.map(toEventWork), [references]);
+  const loadEventWorkDetail = useCallback(
+    async (id: string, signal: AbortSignal) => {
+      try {
+        return await fetchMembersOnlyEventWork(id, accessToken, signal);
+      } catch (error) {
+        if (
+          error instanceof MembersOnlyApiError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          invalidateAuthentication();
+        }
+        throw error;
+      }
+    },
+    [accessToken, invalidateAuthentication],
+  );
   const members = useMemo(() => directory.map(toMember), [directory]);
   const years = [
     ...new Set(works.map((work) => String(work.year)).filter((year) => year !== "0")),
@@ -247,6 +247,7 @@ export function MembersOnlyEventWorksBrowser({
           kind="event"
           works={works}
           members={members}
+          loadDetail={loadEventWorkDetail}
           memberHref={(id) =>
             `/members-only/members/profile?id=${encodeURIComponent(id)}`
           }

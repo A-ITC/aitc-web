@@ -1,5 +1,6 @@
 import { apiBaseUrl } from "./api-config";
-import type { Link, WorkType } from "@/components/data";
+import { normalizeEventWork, type ApiWork } from "./api";
+import type { EventWork, Link, WorkType } from "@/components/data";
 
 export type MemberRole =
   | "REPRESENTATIVE"
@@ -112,4 +113,30 @@ export async function fetchMembersOnlyMemberWorks(
     signal,
   );
   return response.items;
+}
+
+export async function fetchMembersOnlyEventWorks(
+  accessToken: string,
+  signal: AbortSignal,
+): Promise<EventWork[]> {
+  const response = await protectedRequest<ItemList<ApiWork>>(
+    "/members-only/event-works",
+    accessToken,
+    signal,
+  );
+  return response.items.map(normalizeEventWork);
+}
+
+export async function fetchMembersOnlyEventWork(
+  id: string,
+  accessToken: string,
+  signal: AbortSignal,
+): Promise<EventWork> {
+  return normalizeEventWork(
+    await protectedRequest<ApiWork>(
+      `/members-only/event-works/${encodeURIComponent(id)}`,
+      accessToken,
+      signal,
+    ),
+  );
 }
