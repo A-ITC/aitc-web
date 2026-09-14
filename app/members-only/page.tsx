@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { MembersOnlyPage } from "@/components/members-only/members-only-page";
-
-export const metadata: Metadata = {
-  title: "部員向け | AITC",
-  description: "認証済みAITC部員向けのメンバー一覧",
-};
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <MembersOnlyPage />;
+  redirect("/members-only/members");
 }

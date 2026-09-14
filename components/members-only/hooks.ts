@@ -18,7 +18,14 @@ type DetailLoadStatus =
   | "ready"
   | "not-found"
   | "error";
+type EventWorksLoadStatus = "idle" | "loading" | "ready" | "error";
 type FilterKey = "generation" | "department";
+const MEMBER_WORK_REQUEST_CONCURRENCY = 5;
+
+export type MembersOnlyEventWorkReference = MemberWorkReference & {
+  workKind: "EVENT";
+  eventWorkId: string;
+};
 
 export function useCollapsedGenerations() {
   const [collapsedGenerations, setCollapsedGenerations] = useState<Set<number>>(
@@ -81,7 +88,7 @@ export function useMembersOnlyFilters(
       else next.set(key, value);
       resetCollapsedGenerations();
       router.push(
-        `/members-only${next.size ? `?${next.toString()}` : ""}`,
+        `/members-only/members${next.size ? `?${next.toString()}` : ""}`,
         { scroll: false },
       );
     },
@@ -191,4 +198,97 @@ export function useMembersOnlyDetail({
   }, [accessToken, invalidateAuthentication, memberId, reloadKey]);
 
   return { loadStatus, member, works, directory };
+}
+
+function isEventWorkReference(
+  reference: MemberWorkReference,
+): reference is MembersOnlyEventWorkReference {
+  return reference.workKind === "EVENT" && Boolean(reference.eventWorkId);
+}
+
+export function useMembersOnlyEventWorks({
+  accessToken,
+  invalidateAuthentication,
+  reloadKey,
+}: {
+  accessToken: string;
+  invalidateAuthentication: () => void;
+  reloadKey: number;
+}) {
+  const [references, setReferences] = useState<
+    MembersOnlyEventWorkReference[]
+  >([]);
+  const [directory, setDirectory] = useState<MembersOnlyMember[]>([]);
+  const [loadStatus, setLoadStatus] =
+    useState<EventWorksLoadStatus>("idle");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoadStatus("loading");
+
+    void fetchMembersOnlyMembers(accessToken, controller.signal)
+      .then(async (members) => {
+        const byWorkId = new Map<string, MembersOnlyEventWorkReference>();
+
+        for (
+          let start = 0;
+          start < members.length;
+          start += MEMBER_WORK_REQUEST_CONCURRENCY
+        ) {
+          const batch = members.slice(
+            start,
+            start + MEMBER_WORK_REQUEST_CONCURRENCY,
+          );
+          const responses = await Promise.all(
+            batch.map(async (member) => ({
+              member,
+              references: await fetchMembersOnlyMemberWorks(
+                member.id,
+                accessToken,
+                controller.signal,
+              ),
+            })),
+          );
+
+          responses.forEach(({ member, references: memberReferences }) => {
+            memberReferences.filter(isEventWorkReference).forEach((reference) => {
+              const current = byWorkId.get(reference.eventWorkId);
+              const creatorIds = new Set([
+                ...(current?.creatorIds ?? []),
+                ...(reference.creatorIds ?? []),
+                member.id,
+              ]);
+
+              byWorkId.set(reference.eventWorkId, {
+                ...(current ?? reference),
+                creatorIds: [...creatorIds],
+              });
+            });
+          });
+        }
+
+        return { members, references: [...byWorkId.values()] };
+      })
+      .then(({ members, references: nextReferences }) => {
+        setDirectory(members);
+        setReferences(nextReferences);
+        setLoadStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (
+          error instanceof MembersOnlyApiError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          invalidateAuthentication();
+          setLoadStatus("idle");
+          return;
+        }
+        setLoadStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [accessToken, invalidateAuthentication, reloadKey]);
+
+  return { references, directory, loadStatus };
 }
