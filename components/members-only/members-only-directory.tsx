@@ -91,7 +91,7 @@ function MembersOnlyFilters({
 function MembersOnlyMemberLink({ member }: { member: MembersOnlyMember }) {
   return (
     <Link
-      href={`/members-only/members?id=${encodeURIComponent(member.id)}`}
+      href={`/members-only/members/profile?id=${encodeURIComponent(member.id)}`}
       className="grid gap-6 border border-slate-200 bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl focus-visible:-translate-y-1 focus-visible:border-blue-300 focus-visible:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400 max-md:grid-cols-3 max-md:items-start md:p-6"
     >
       <MemberIcon className="w-24 rounded-full bg-slate-200" id={member.id} name={member.name} />

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  fetchMembersOnlyEventWorks,
   fetchMembersOnlyMember,
   fetchMembersOnlyMembers,
   fetchMembersOnlyMemberWorks,
@@ -10,6 +11,7 @@ import {
   type MembersOnlyMember,
   type MemberWorkReference,
 } from "@/lib/members-only-api";
+import type { EventWork } from "../data";
 
 type DirectoryLoadStatus = "idle" | "loading" | "ready" | "error";
 type DetailLoadStatus =
@@ -18,6 +20,7 @@ type DetailLoadStatus =
   | "ready"
   | "not-found"
   | "error";
+type EventWorksLoadStatus = "idle" | "loading" | "ready" | "error";
 type FilterKey = "generation" | "department";
 
 export function useCollapsedGenerations() {
@@ -81,7 +84,7 @@ export function useMembersOnlyFilters(
       else next.set(key, value);
       resetCollapsedGenerations();
       router.push(
-        `/members-only${next.size ? `?${next.toString()}` : ""}`,
+        `/members-only/members${next.size ? `?${next.toString()}` : ""}`,
         { scroll: false },
       );
     },
@@ -191,4 +194,50 @@ export function useMembersOnlyDetail({
   }, [accessToken, invalidateAuthentication, memberId, reloadKey]);
 
   return { loadStatus, member, works, directory };
+}
+
+export function useMembersOnlyEventWorks({
+  accessToken,
+  invalidateAuthentication,
+  reloadKey,
+}: {
+  accessToken: string;
+  invalidateAuthentication: () => void;
+  reloadKey: number;
+}) {
+  const [works, setWorks] = useState<EventWork[]>([]);
+  const [directory, setDirectory] = useState<MembersOnlyMember[]>([]);
+  const [loadStatus, setLoadStatus] =
+    useState<EventWorksLoadStatus>("idle");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoadStatus("loading");
+
+    void Promise.all([
+      fetchMembersOnlyEventWorks(accessToken, controller.signal),
+      fetchMembersOnlyMembers(accessToken, controller.signal),
+    ])
+      .then(([nextWorks, members]) => {
+        setWorks(nextWorks);
+        setDirectory(members);
+        setLoadStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (
+          error instanceof MembersOnlyApiError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          invalidateAuthentication();
+          setLoadStatus("idle");
+          return;
+        }
+        setLoadStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [accessToken, invalidateAuthentication, reloadKey]);
+
+  return { works, directory, loadStatus };
 }

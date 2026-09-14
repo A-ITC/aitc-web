@@ -17,7 +17,7 @@ const workThumbnailBaseUrl = (
 ).replace(/\/$/, "");
 
 type ApiList<T> = { items: T[] };
-type ApiWork = Partial<EventWork & PersonalWork> & {
+export type ApiWork = Partial<EventWork & PersonalWork> & {
   id: string;
   title: string;
   type: WorkType;
@@ -42,9 +42,13 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string): Promise<T> {
+async function request<T>(
+  path: string,
+  signal?: AbortSignal,
+): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     cache: "no-store",
+    signal,
   });
   if (!response.ok) {
     throw new ApiError(
@@ -70,7 +74,7 @@ function normalizeMember(
   };
 }
 
-function normalizeEventWork(work: ApiWork): EventWork {
+export function normalizeEventWork(work: ApiWork): EventWork {
   const releasedAt = work.releasedAt ?? "";
   return {
     id: work.id,
@@ -144,9 +148,12 @@ export async function fetchEventWorks(): Promise<EventWork[]> {
   return response.items.map(normalizeEventWork);
 }
 
-export async function fetchEventWork(id: string): Promise<EventWork> {
+export async function fetchEventWork(
+  id: string,
+  signal?: AbortSignal,
+): Promise<EventWork> {
   return normalizeEventWork(
-    await request<ApiWork>(`/event-works/${encodeURIComponent(id)}`),
+    await request<ApiWork>(`/event-works/${encodeURIComponent(id)}`, signal),
   );
 }
 
@@ -155,14 +162,20 @@ export async function fetchPersonalWorks(): Promise<PersonalWork[]> {
   return response.items.map(normalizePersonalWork);
 }
 
-export async function fetchPersonalWork(id: string): Promise<PersonalWork> {
+export async function fetchPersonalWork(
+  id: string,
+  signal?: AbortSignal,
+): Promise<PersonalWork> {
   return normalizePersonalWork(
-    await request<ApiWork>(`/personal-works/${encodeURIComponent(id)}`),
+    await request<ApiWork>(`/personal-works/${encodeURIComponent(id)}`, signal),
   );
 }
 
 export const fetchWorkDetail = (
   kind: "event" | "personal",
   id: string,
+  signal?: AbortSignal,
 ): Promise<Work> =>
-  kind === "event" ? fetchEventWork(id) : fetchPersonalWork(id);
+  kind === "event"
+    ? fetchEventWork(id, signal)
+    : fetchPersonalWork(id, signal);

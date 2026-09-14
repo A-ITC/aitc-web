@@ -51,7 +51,7 @@ export function MembersOnlyDetail({
       <MembersOnlyPanel role="alert">
         <span className="flex size-14 items-center justify-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2 className={stateHeadingClassName}>メンバーが指定されていません</h2>
-        <Link className="min-w-44 cursor-pointer rounded-sm border-0 bg-[image:var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" href="/members-only">一覧へ戻る</Link>
+        <Link className="min-w-44 cursor-pointer rounded-sm border-0 bg-[image:var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" href="/members-only/members">一覧へ戻る</Link>
       </MembersOnlyPanel>
     );
   }
@@ -70,7 +70,7 @@ export function MembersOnlyDetail({
       <MembersOnlyPanel role="alert">
         <span className="flex size-14 items-center justify-center rounded-full bg-red-50 font-['DM_Mono',monospace] text-3xl leading-none font-bold text-red-800" aria-hidden="true">!</span>
         <h2 className={stateHeadingClassName}>メンバーが見つかりません</h2>
-        <Link className="min-w-44 cursor-pointer rounded-sm border-0 bg-[image:var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" href="/members-only">一覧へ戻る</Link>
+        <Link className="min-w-44 cursor-pointer rounded-sm border-0 bg-[image:var(--accent-gradient)] px-5 py-3 text-center font-bold text-slate-950 hover:-translate-y-px hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400" href="/members-only/members">一覧へ戻る</Link>
       </MembersOnlyPanel>
     );
   }
@@ -91,7 +91,7 @@ export function MembersOnlyDetail({
   return (
     <>
       <div className="mx-auto mt-6 max-w-4xl px-6 text-sm font-bold md:mt-9">
-        <Link href="/members-only">← メンバー一覧</Link>
+        <Link href="/members-only/members">← メンバー一覧</Link>
       </div>
 
       <section className="mx-auto grid max-w-4xl grid-cols-3 items-center gap-6 px-6 pt-16 pb-11 md:gap-14 md:pt-28 md:pb-20">
@@ -134,6 +134,8 @@ export function MembersOnlyDetail({
             references={works}
             memberId={member.id}
             directory={directory}
+            accessToken={accessToken}
+            invalidateAuthentication={invalidateAuthentication}
           />
         )}
       </section>
