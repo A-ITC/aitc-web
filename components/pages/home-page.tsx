@@ -73,13 +73,16 @@ export function HomePage() {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {activities.map(({ icon, title, description }) => (
             <article key={title} className="flex min-h-56 flex-col border border-slate-200 p-7 md:p-8">
-              <FontAwesomeIcon
-                icon={icon}
-                className="h-8 w-8 text-[var(--blue)]"
-                aria-hidden="true"
-              />
-              <h3 className="mt-8 mb-3 text-xl font-bold tracking-tight">{title}</h3>
-              <p className="m-0 text-sm leading-7 text-slate-600">{description}</p>
+              <div className="flex items-center gap-4">
+                <FontAwesomeIcon
+                  icon={icon}
+                  size="3x"
+                  className="shrink-0 text-[var(--blue)]"
+                  aria-hidden="true"
+                />
+                <h3 className="m-0 text-xl font-bold tracking-tight">{title}</h3>
+              </div>
+              <p className="mt-3 mb-0 text-sm leading-7 text-slate-600">{description}</p>
             </article>
           ))}
         </div>
