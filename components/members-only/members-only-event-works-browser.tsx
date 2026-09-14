@@ -248,7 +248,7 @@ export function MembersOnlyEventWorksBrowser({
           works={works}
           members={members}
           memberHref={(id) =>
-            `/members-only/members?id=${encodeURIComponent(id)}`
+            `/members-only/members/profile?id=${encodeURIComponent(id)}`
           }
           onClose={() => setSelected(null)}
         />

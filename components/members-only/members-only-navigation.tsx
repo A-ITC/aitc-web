@@ -16,7 +16,8 @@ export function MembersOnlyNavigation({ onLogout }: { onLogout: () => void }) {
       <nav aria-label="部員向けページ">
         <ul className="m-0 flex list-none gap-2 p-0 md:flex-col">
           {navigationItems.map((item) => {
-            const isCurrent = pathname === item.href;
+            const isCurrent =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <li className="min-w-0 flex-1" key={item.href}>
                 <Link

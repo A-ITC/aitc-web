@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
 import { useDiscordAuth } from "@/lib/discord-auth";
 import { Layout } from "../common/layout";
 import { PageHead } from "../common/page-head";
@@ -77,52 +76,36 @@ function MembersOnlyAuthenticatedPage({
   );
 }
 
-function MembersOnlyMembersContent({
-  accessToken,
-  invalidateAuthentication,
-}: AuthenticatedContentProps) {
-  const isDetail = Boolean(useSearchParams().get("id"));
-
-  return isDetail ? (
-    <MembersOnlyDetail
-      accessToken={accessToken}
-      invalidateAuthentication={invalidateAuthentication}
-    />
-  ) : (
-    <MembersOnlyDirectory
-      accessToken={accessToken}
-      invalidateAuthentication={invalidateAuthentication}
-    />
-  );
-}
-
-function MembersOnlyMembersTitle() {
-  return useSearchParams().get("id") ? "部員プロフィール" : "メンバー一覧";
-}
-
-function MembersOnlyMembersDescription() {
-  return useSearchParams().get("id")
-    ? "認証済みのAITC部員にメンバー情報と制作作品を表示します。"
-    : "認証済みのAITC部員向けメンバー一覧です。";
-}
-
 export function MembersOnlyMembersPage() {
   return (
     <MembersOnlyAuthenticatedPage
-      title={
-        <Suspense fallback="メンバー一覧">
-          <MembersOnlyMembersTitle />
-        </Suspense>
-      }
-      description={
-        <Suspense fallback="認証済みのAITC部員向けメンバー一覧です。">
-          <MembersOnlyMembersDescription />
-        </Suspense>
-      }
+      title="メンバー一覧"
+      description="認証済みのAITC部員向けメンバー一覧です。"
     >
-      {(props) => (
+      {({ accessToken, invalidateAuthentication }) => (
         <Suspense fallback={<LoadingFallback />}>
-          <MembersOnlyMembersContent {...props} />
+          <MembersOnlyDirectory
+            accessToken={accessToken}
+            invalidateAuthentication={invalidateAuthentication}
+          />
+        </Suspense>
+      )}
+    </MembersOnlyAuthenticatedPage>
+  );
+}
+
+export function MembersOnlyMemberProfilePage() {
+  return (
+    <MembersOnlyAuthenticatedPage
+      title="部員プロフィール"
+      description="認証済みのAITC部員にメンバー情報と制作作品を表示します。"
+    >
+      {({ accessToken, invalidateAuthentication }) => (
+        <Suspense fallback={<LoadingFallback />}>
+          <MembersOnlyDetail
+            accessToken={accessToken}
+            invalidateAuthentication={invalidateAuthentication}
+          />
         </Suspense>
       )}
     </MembersOnlyAuthenticatedPage>
