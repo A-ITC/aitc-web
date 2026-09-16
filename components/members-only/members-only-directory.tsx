@@ -16,6 +16,7 @@ import {
   useMembersOnlyDirectory,
   useMembersOnlyFilters,
 } from "./hooks";
+import { DepartmentList } from "./department-list";
 import { MembersOnlyPanel } from "./members-only-panel";
 import { MembersOnlySpinner } from "./members-only-spinner";
 
@@ -96,7 +97,9 @@ function MembersOnlyMemberLink({ member }: { member: MembersOnlyMember }) {
     >
       <MemberIcon className="w-24 rounded-full bg-slate-200" id={member.id} name={member.name} />
       <div className="max-md:col-span-2">
-        <p className="mt-0.5 mb-1 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">{member.department.join(" / ")}</p>
+        <p className="mt-0.5 mb-1 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">
+          <DepartmentList departments={member.department} />
+        </p>
         <h3 className="mt-1 mb-2.5 text-2xl tracking-tighter">{member.name}</h3>
         <span className="mt-2.5 block text-xs font-bold text-[var(--blue)] md:mt-5">プロフィールを見る →</span>
       </div>
