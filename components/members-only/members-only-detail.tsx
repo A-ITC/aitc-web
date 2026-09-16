@@ -100,7 +100,7 @@ export function MembersOnlyDetail({
         <div className="col-span-2">
           <p className="my-4 font-['DM_Mono',monospace] text-base font-medium tracking-widest text-[var(--blue)]">MEMBER PROFILE</p>
           <h1 className="my-3 text-4xl tracking-tighter md:text-7xl">{member.name}</h1>
-          <p className="my-4 font-['DM_Mono',monospace] text-xs text-[var(--blue)]">
+          <p className="my-4 font-['DM_Mono',monospace] text-base text-[var(--blue)]">
             第{member.generation}期 · <DepartmentList departments={member.department} />
           </p>
           {member.roles.length > 0 && (

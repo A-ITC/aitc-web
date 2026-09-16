@@ -25,7 +25,11 @@ export function DepartmentList({ departments }: { departments: string[] }) {
             className="inline-flex items-center gap-1 whitespace-nowrap"
             key={`${department}-${index}`}
           >
-            {index > 0 && <span aria-hidden="true">/</span>}
+            {index > 0 && (
+              <span className="text-black" aria-hidden="true">
+                /
+              </span>
+            )}
             {icon && (
               <FontAwesomeIcon
                 icon={icon}
