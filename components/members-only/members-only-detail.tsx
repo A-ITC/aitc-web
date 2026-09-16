@@ -104,8 +104,18 @@ export function MembersOnlyDetail({
             第{member.generation}期 · <DepartmentList departments={member.department} />
           </p>
           {member.roles.length > 0 && (
-            <p className="mb-2.5 inline-block bg-slate-100 px-2 py-1 text-xs leading-snug text-slate-900">
-              {member.roles.map((role) => roleLabels[role] ?? role).join(" / ")}
+            <p className="mb-2.5 flex flex-wrap items-center gap-2 text-sm leading-snug">
+              {member.roles.map((role, index) => (
+                <span
+                  className="inline-flex items-center gap-2"
+                  key={`${role}-${index}`}
+                >
+                  {index > 0 && <span className="text-black">/</span>}
+                  <span className="rounded-sm bg-[var(--mint)] px-2 py-1 text-white">
+                    {roleLabels[role] ?? role}
+                  </span>
+                </span>
+              ))}
             </p>
           )}
           {member.profile && <p className="my-4 max-w-lg text-base leading-loose">{member.profile}</p>}
