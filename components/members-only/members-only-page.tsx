@@ -39,6 +39,8 @@ function MembersOnlyAuthenticatedPage({
 }) {
   const {
     accessToken,
+    profile,
+    profileStatus,
     status,
     startAuthentication,
     logout,
@@ -49,7 +51,11 @@ function MembersOnlyAuthenticatedPage({
     <Layout>
       {status === "authenticated" && accessToken ? (
         <div className="mx-auto max-w-7xl md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:gap-4 md:px-6">
-          <MembersOnlyNavigation onLogout={logout} />
+          <MembersOnlyNavigation
+            onLogout={logout}
+            profile={profile}
+            profileStatus={profileStatus}
+          />
           <div className="min-w-0">
             <PageHead>
               <PageHead.Kicker>MEMBERS ONLY</PageHead.Kicker>

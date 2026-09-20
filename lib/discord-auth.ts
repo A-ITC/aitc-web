@@ -7,6 +7,13 @@ const STORAGE_KEY = "aitcAccessToken";
 const AUTH_TIMEOUT_MS = 5 * 60 * 1000;
 const MAX_TOKEN_LENGTH = 8192;
 
+export type DiscordProfile = {
+  username: string | null;
+  avatarUrl: string | null;
+};
+
+export type DiscordProfileStatus = "idle" | "loading" | "ready";
+
 export type AuthStatus =
   | "checking"
   | "unauthenticated"
@@ -20,18 +27,47 @@ type AuthMessage = {
   accessToken?: unknown;
 };
 
-type UseDiscordAuthOptions = {
-  validateStoredToken?: boolean;
-};
-
 function removeStoredToken(): void {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-async function verifyAccessToken(
+function parseDiscordProfile(body: unknown): DiscordProfile {
+  if (typeof body !== "object" || body === null) {
+    return { username: null, avatarUrl: null };
+  }
+
+  const candidate = body as Record<string, unknown>;
+  const username =
+    typeof candidate.username === "string" &&
+    candidate.username.length >= 2 &&
+    candidate.username.length <= 32
+      ? candidate.username
+      : null;
+
+  let avatarUrl: string | null = null;
+  if (typeof candidate.avatar_url === "string") {
+    try {
+      const url = new URL(candidate.avatar_url);
+      if (url.protocol === "https:" && url.hostname === "cdn.discordapp.com") {
+        avatarUrl = url.toString();
+      }
+    } catch {
+      // An invalid or unsupported URL is rendered with the fallback avatar.
+    }
+  }
+
+  return { username, avatarUrl };
+}
+
+type ProfileRequestResult =
+  | { kind: "ready"; profile: DiscordProfile }
+  | { kind: "unavailable" }
+  | { kind: "unauthorized" };
+
+async function requestDiscordProfile(
   accessToken: string,
   signal: AbortSignal,
-): Promise<boolean> {
+): Promise<ProfileRequestResult> {
   const response = await fetch(`${apiBaseUrl}/auth/me`, {
     method: "GET",
     headers: {
@@ -42,24 +78,27 @@ async function verifyAccessToken(
     signal,
   });
 
-  if (!response.ok) return false;
+  if (response.status === 401 || response.status === 403) {
+    return { kind: "unauthorized" };
+  }
+  if (!response.ok) return { kind: "unavailable" };
 
-  const body: unknown = await response.json();
-  return (
-    typeof body === "object" &&
-    body !== null &&
-    "authenticated" in body &&
-    body.authenticated === true
-  );
+  try {
+    const body: unknown = await response.json();
+    return { kind: "ready", profile: parseDiscordProfile(body) };
+  } catch {
+    return { kind: "unavailable" };
+  }
 }
 
-export function useDiscordAuth({
-  validateStoredToken = false,
-}: UseDiscordAuthOptions = {}) {
+export function useDiscordAuth() {
   const [status, setStatus] = useState<AuthStatus>("checking");
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<DiscordProfile | null>(null);
+  const [profileStatus, setProfileStatus] =
+    useState<DiscordProfileStatus>("idle");
   const popupCleanupRef = useRef<(() => void) | null>(null);
-  const validationRef = useRef<AbortController | null>(null);
+  const profileRequestRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
 
   const stopPopupFlow = useCallback(() => {
@@ -73,7 +112,7 @@ export function useDiscordAuth({
 
   const invalidateAuthentication = useCallback(() => {
     stopPopupFlow();
-    validationRef.current?.abort();
+    profileRequestRef.current?.abort();
     try {
       removeStoredToken();
     } catch {
@@ -81,49 +120,60 @@ export function useDiscordAuth({
     }
     if (mountedRef.current) {
       setAccessToken(null);
+      setProfile(null);
+      setProfileStatus("idle");
       setStatus("unauthenticated");
     }
   }, [stopPopupFlow]);
 
-  const validateAndAuthenticate = useCallback(
+  const loadProfile = useCallback(
     async (token: string) => {
-      validationRef.current?.abort();
+      profileRequestRef.current?.abort();
       const controller = new AbortController();
-      validationRef.current = controller;
+      profileRequestRef.current = controller;
 
-      if (mountedRef.current) setStatus("checking");
+      if (mountedRef.current) {
+        setProfile(null);
+        setProfileStatus("loading");
+      }
 
       try {
-        const authenticated = await verifyAccessToken(token, controller.signal);
+        const result = await requestDiscordProfile(token, controller.signal);
         if (!mountedRef.current || controller.signal.aborted) return;
 
-        if (authenticated) {
-          setAccessToken(token);
-          setStatus("authenticated");
+        if (result.kind === "unauthorized") {
+          invalidateAuthentication();
           return;
         }
 
-        removeStoredToken();
-        setAccessToken(null);
-        showError();
+        setProfile(
+          result.kind === "ready"
+            ? result.profile
+            : { username: null, avatarUrl: null },
+        );
+        setProfileStatus("ready");
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
         if (!mountedRef.current) return;
 
-        try {
-          removeStoredToken();
-        } catch {
-          // The same generic error is shown when browser storage is unavailable.
-        }
-        setAccessToken(null);
-        showError();
+        setProfile({ username: null, avatarUrl: null });
+        setProfileStatus("ready");
       } finally {
-        if (validationRef.current === controller) {
-          validationRef.current = null;
+        if (profileRequestRef.current === controller) {
+          profileRequestRef.current = null;
         }
       }
     },
-    [showError],
+    [invalidateAuthentication],
+  );
+
+  const authenticateWithToken = useCallback(
+    (token: string) => {
+      setAccessToken(token);
+      setStatus("authenticated");
+      void loadProfile(token);
+    },
+    [loadProfile],
   );
 
   useEffect(() => {
@@ -133,11 +183,8 @@ export function useDiscordAuth({
       const storedToken = sessionStorage.getItem(STORAGE_KEY);
       if (!storedToken) {
         setStatus("unauthenticated");
-      } else if (validateStoredToken) {
-        void validateAndAuthenticate(storedToken);
       } else {
-        setAccessToken(storedToken);
-        setStatus("authenticated");
+        authenticateWithToken(storedToken);
       }
     } catch {
       showError();
@@ -146,18 +193,13 @@ export function useDiscordAuth({
     return () => {
       mountedRef.current = false;
       stopPopupFlow();
-      validationRef.current?.abort();
+      profileRequestRef.current?.abort();
     };
-  }, [
-    showError,
-    stopPopupFlow,
-    validateAndAuthenticate,
-    validateStoredToken,
-  ]);
+  }, [authenticateWithToken, showError, stopPopupFlow]);
 
   const startAuthentication = useCallback(() => {
     stopPopupFlow();
-    validationRef.current?.abort();
+    profileRequestRef.current?.abort();
 
     if (typeof crypto.randomUUID !== "function") {
       showError();
@@ -234,7 +276,7 @@ export function useDiscordAuth({
         return;
       }
 
-      void validateAndAuthenticate(message.accessToken);
+      authenticateWithToken(message.accessToken);
     };
 
     window.addEventListener("message", receiveAuthResult);
@@ -243,7 +285,7 @@ export function useDiscordAuth({
     }, 500);
     timeoutTimer = window.setTimeout(fail, AUTH_TIMEOUT_MS);
     popupCleanupRef.current = cleanup;
-  }, [showError, stopPopupFlow, validateAndAuthenticate]);
+  }, [authenticateWithToken, showError, stopPopupFlow]);
 
   const logout = useCallback(() => {
     invalidateAuthentication();
@@ -251,6 +293,8 @@ export function useDiscordAuth({
 
   return {
     accessToken,
+    profile,
+    profileStatus,
     status,
     startAuthentication,
     logout,
