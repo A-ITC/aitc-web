@@ -77,7 +77,7 @@ export function HomePage() {
               <div className="flex items-center gap-4">
                 <FontAwesomeIcon
                   icon={icon}
-                  size="3x"
+                  size="2x"
                   className="shrink-0 text-[var(--blue)]"
                   aria-hidden="true"
                 />
