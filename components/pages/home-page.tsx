@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { withBasePath } from "../data";
 import { EventTimeline } from "../event-timeline";
+import { RelatedLinks } from "../related-links";
 import { ActionButton } from "../common/action-button";
 import { Layout, Logo } from "../common/layout";
 
@@ -116,6 +117,7 @@ export function HomePage() {
         </div>
       </section>
       <EventTimeline />
+      <RelatedLinks />
     </Layout>
   );
 }
