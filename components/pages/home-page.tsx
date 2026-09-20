@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { withBasePath } from "../data";
 import { EventTimeline } from "../event-timeline";
+import { RelatedLinks } from "../related-links";
 import { ActionButton } from "../common/action-button";
 import { Layout, Logo } from "../common/layout";
 
@@ -76,7 +77,7 @@ export function HomePage() {
               <div className="flex items-center gap-4">
                 <FontAwesomeIcon
                   icon={icon}
-                  size="3x"
+                  size="2x"
                   className="shrink-0 text-[var(--blue)]"
                   aria-hidden="true"
                 />
@@ -116,6 +117,7 @@ export function HomePage() {
         </div>
       </section>
       <EventTimeline />
+      <RelatedLinks />
     </Layout>
   );
 }
