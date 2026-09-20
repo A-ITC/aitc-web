@@ -24,6 +24,7 @@ export function MemberIcon({
       className={className}
       src={src}
       alt={`${name}のアイコン`}
+      loading="lazy"
       onError={() => {
         if (!hasFailed) setHasFailed(true);
       }}
