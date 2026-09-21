@@ -31,10 +31,12 @@ function LoadingFallback() {
 function MembersOnlyAuthenticatedPage({
   title,
   description,
+  showPageHead = true,
   children,
 }: {
   title: ReactNode;
   description: ReactNode;
+  showPageHead?: boolean;
   children: (props: AuthenticatedContentProps) => ReactNode;
 }) {
   const {
@@ -57,21 +59,25 @@ function MembersOnlyAuthenticatedPage({
             profileStatus={profileStatus}
           />
           <div className="min-w-0">
-            <PageHead>
-              <PageHead.Kicker>MEMBERS ONLY</PageHead.Kicker>
-              <PageHead.Title>{title}</PageHead.Title>
-              <PageHead.Description>{description}</PageHead.Description>
-            </PageHead>
+            {showPageHead && (
+              <PageHead>
+                <PageHead.Kicker>MEMBERS ONLY</PageHead.Kicker>
+                <PageHead.Title>{title}</PageHead.Title>
+                <PageHead.Description>{description}</PageHead.Description>
+              </PageHead>
+            )}
             {children({ accessToken, invalidateAuthentication })}
           </div>
         </div>
       ) : (
         <>
-          <PageHead>
-            <PageHead.Kicker>MEMBERS ONLY</PageHead.Kicker>
-            <PageHead.Title>{title}</PageHead.Title>
-            <PageHead.Description>{description}</PageHead.Description>
-          </PageHead>
+          {showPageHead && (
+            <PageHead>
+              <PageHead.Kicker>MEMBERS ONLY</PageHead.Kicker>
+              <PageHead.Title>{title}</PageHead.Title>
+              <PageHead.Description>{description}</PageHead.Description>
+            </PageHead>
+          )}
           <MembersOnlyAuthPanel
             status={status}
             onAuthenticate={startAuthentication}
@@ -105,6 +111,7 @@ export function MembersOnlyMemberProfilePage() {
     <MembersOnlyAuthenticatedPage
       title="部員プロフィール"
       description="認証済みのAITC部員にメンバー情報と制作作品を表示します。"
+      showPageHead={false}
     >
       {({ accessToken, invalidateAuthentication }) => (
         <Suspense fallback={<LoadingFallback />}>

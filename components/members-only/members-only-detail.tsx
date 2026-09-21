@@ -40,12 +40,13 @@ export function MembersOnlyDetail({
   const params = useSearchParams();
   const memberId = validMemberId(params.getAll("id"));
   const [reloadKey, setReloadKey] = useState(0);
-  const { loadStatus, member, works, directory } = useMembersOnlyDetail({
-    memberId,
-    accessToken,
-    invalidateAuthentication,
-    reloadKey,
-  });
+  const { loadStatus, member, works, eventWorks, directory } =
+    useMembersOnlyDetail({
+      memberId,
+      accessToken,
+      invalidateAuthentication,
+      reloadKey,
+    });
 
   if (!memberId) {
     return (
@@ -143,6 +144,7 @@ export function MembersOnlyDetail({
         ) : (
           <MembersOnlyWorksBrowser
             references={works}
+            eventWorks={eventWorks}
             memberId={member.id}
             directory={directory}
             accessToken={accessToken}

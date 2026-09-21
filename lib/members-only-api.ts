@@ -28,6 +28,7 @@ export type MemberWorkReference = {
   title: string;
   type?: WorkType;
   eventWorkId?: string;
+  creditId?: string;
   eventName?: string;
   eventWorkTitle?: string;
   personalWorkId?: string;
