@@ -1,4 +1,6 @@
 import type {
+  EventCredit,
+  EventCreator,
   EventWork,
   Member,
   PersonalWork,
@@ -17,11 +19,16 @@ const workThumbnailBaseUrl = (
 ).replace(/\/$/, "");
 
 type ApiList<T> = { items: T[] };
-export type ApiWork = Partial<EventWork & PersonalWork> & {
+type ApiEventCredit = Omit<EventCredit, "creatorIds"> & {
+  creatorIds: Array<EventCreator | string>;
+};
+
+export type ApiWork = Partial<Omit<EventWork, "credits"> & PersonalWork> & {
   id: string;
   title: string;
   type: WorkType;
   creatorIds?: string[];
+  credits?: ApiEventCredit[];
   eventName?: string;
   releasedAt?: string;
   publishedAt?: string;
@@ -86,7 +93,14 @@ export function normalizeEventWork(work: ApiWork): EventWork {
     event: work.event ?? work.eventName ?? "",
     year: work.year ?? (Number(releasedAt.slice(0, 4)) || 0),
     links: work.links ?? [],
-    credits: work.credits ?? [],
+    credits: (work.credits ?? []).map((credit) => ({
+      ...credit,
+      creatorIds: credit.creatorIds.map((creator) =>
+        typeof creator === "string"
+          ? { memberName: null, creatorId: creator }
+          : creator,
+      ),
+    })),
   };
 }
 
