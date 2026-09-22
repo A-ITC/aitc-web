@@ -24,10 +24,15 @@ export type Member = {
   links: Link[];
 };
 
+export type EventCreator = {
+  memberName: string | null;
+  creatorId: string | null;
+};
+
 export type EventCredit = {
   id: string;
   trackNumber: number | string;
-  creatorIds: string[];
+  creatorIds: EventCreator[];
   workTitle?: string;
   role?: string;
   isMeta?: boolean;

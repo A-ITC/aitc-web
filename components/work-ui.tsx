@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   CollectionKind,
+  EventCreator,
   isEventWork,
   Member,
   PersonalWork,
@@ -13,6 +14,34 @@ import {
 } from "./data";
 import { fetchWorkDetail } from "@/lib/api";
 import { CoreModal } from "./common/core-modal";
+
+function EventCreatorList({
+  creators,
+  members,
+  memberHref,
+}: {
+  creators: EventCreator[];
+  members: Member[];
+  memberHref?: (id: string) => string;
+}) {
+  return creators.map((creator, index) => {
+    const id = creator.creatorId;
+    const name = id
+      ? members.find((member) => member.id === id)?.name ?? id
+      : creator.memberName ?? "—";
+
+    return (
+      <span key={`${id ?? creator.memberName ?? "unknown"}-${index}`}>
+        {index > 0 && " / "}
+        {id && memberHref ? (
+          <Link href={memberHref(id)}>{name}</Link>
+        ) : (
+          name
+        )}
+      </span>
+    );
+  });
+}
 
 export function WorkCard({
   work,
@@ -160,18 +189,11 @@ export function WorkModal({
                     <tr key={credit.id}>
                       <td>{credit.trackNumber}</td>
                       <td>
-                        {credit.creatorIds.map((id, index) => (
-                          <span key={id}>
-                            {index > 0 && " / "}
-                            {memberHref ? (
-                              <Link href={memberHref(id)}>
-                                {members.find((member) => member.id === id)?.name ?? id}
-                              </Link>
-                            ) : (
-                              members.find((member) => member.id === id)?.name ?? id
-                            )}
-                          </span>
-                        ))}
+                        <EventCreatorList
+                          creators={credit.creatorIds}
+                          members={members}
+                          memberHref={memberHref}
+                        />
                       </td>
                       <td>{credit.workTitle ?? credit.role ?? "—"}</td>
                     </tr>
@@ -190,18 +212,11 @@ export function WorkModal({
                   {metaCredits.map((credit) => (
                     <tr key={credit.id}>
                       <td>
-                        {credit.creatorIds.map((id, index) => (
-                          <span key={id}>
-                            {index > 0 && " / "}
-                            {memberHref ? (
-                              <Link href={memberHref(id)}>
-                                {members.find((member) => member.id === id)?.name ?? id}
-                              </Link>
-                            ) : (
-                              members.find((member) => member.id === id)?.name ?? id
-                            )}
-                          </span>
-                        ))}
+                        <EventCreatorList
+                          creators={credit.creatorIds}
+                          members={members}
+                          memberHref={memberHref}
+                        />
                       </td>
                       <td>{credit.workTitle ?? credit.role ?? "—"}</td>
                     </tr>
