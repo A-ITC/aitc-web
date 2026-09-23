@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  fetchMembersOnlyEventWork,
   fetchMembersOnlyEventWorks,
   fetchMembersOnlyMember,
   fetchMembersOnlyMembers,
@@ -155,7 +154,6 @@ export function useMembersOnlyDetail({
 }) {
   const [member, setMember] = useState<MembersOnlyMember | null>(null);
   const [works, setWorks] = useState<MemberWorkReference[]>([]);
-  const [eventWorks, setEventWorks] = useState<EventWork[]>([]);
   const [directory, setDirectory] = useState<MembersOnlyMember[]>([]);
   const [loadStatus, setLoadStatus] = useState<DetailLoadStatus>("idle");
 
@@ -170,38 +168,10 @@ export function useMembersOnlyDetail({
       fetchMembersOnlyMembers(accessToken, controller.signal),
       fetchMembersOnlyMemberWorks(memberId, accessToken, controller.signal),
     ])
-      .then(async ([memberResponse, directoryResponse, worksResponse]) => {
-        const eventWorkIds = [
-          ...new Set(
-            worksResponse
-              .filter((work) => work.workKind === "EVENT")
-              .map((work) => work.eventWorkId)
-              .filter((id): id is string => Boolean(id)),
-          ),
-        ];
-        const eventWorkResponses = await Promise.all(
-          eventWorkIds.map((id) =>
-            fetchMembersOnlyEventWork(id, accessToken, controller.signal),
-          ),
-        );
-
-        return {
-          memberResponse,
-          directoryResponse,
-          worksResponse,
-          eventWorkResponses,
-        };
-      })
-      .then(({
-        memberResponse,
-        directoryResponse,
-        worksResponse,
-        eventWorkResponses,
-      }) => {
+      .then(([memberResponse, directoryResponse, worksResponse]) => {
         setMember(memberResponse);
         setDirectory(directoryResponse);
         setWorks(worksResponse);
-        setEventWorks(eventWorkResponses);
         setLoadStatus("ready");
       })
       .catch((error: unknown) => {
@@ -223,7 +193,7 @@ export function useMembersOnlyDetail({
     return () => controller.abort();
   }, [accessToken, invalidateAuthentication, memberId, reloadKey]);
 
-  return { loadStatus, member, works, eventWorks, directory };
+  return { loadStatus, member, works, directory };
 }
 
 export function useMembersOnlyEventWorks({

@@ -98,11 +98,12 @@ export function WorkModal({
 }) {
   const [detail, setDetail] = useState(work);
   const [detailError, setDetailError] = useState(false);
+  const [detailReloadKey, setDetailReloadKey] = useState(0);
   const related = works
     .filter(
       (item) =>
-        item.id !== work.id &&
-        item.creatorIds.some((id) => work.creatorIds.includes(id)),
+        item.id !== detail.id &&
+        item.creatorIds.some((id) => detail.creatorIds.includes(id)),
     )
     .slice(0, 3);
 
@@ -127,7 +128,7 @@ export function WorkModal({
       cancelled = true;
       controller.abort();
     };
-  }, [kind, loadDetail, work]);
+  }, [detailReloadKey, kind, loadDetail, work]);
   const eventWork = isEventWork(detail) ? detail : null;
   const soundcloudLink =
     detail.type === "Music"
@@ -169,7 +170,16 @@ export function WorkModal({
           </dd>
         </dl>
         {detailError && (
-          <p className="my-7 text-sm leading-relaxed">詳細データを取得できませんでした。</p>
+          <div className="my-7 flex flex-wrap items-center gap-3 text-sm leading-relaxed">
+            <span>詳細データを取得できませんでした。</span>
+            <button
+              type="button"
+              className="cursor-pointer border-0 bg-transparent p-0 font-bold text-[var(--blue)] underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-orange-400"
+              onClick={() => setDetailReloadKey((key) => key + 1)}
+            >
+              詳細を再読み込み
+            </button>
+          </div>
         )}
         <p className="my-7 text-sm leading-relaxed">{detail.description}</p>
         {eventWork && trackCredits.length > 0 && (
