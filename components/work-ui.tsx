@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
   CollectionKind,
   EventCreator,
+  EventCredit,
   isEventWork,
   Member,
   PersonalWork,
@@ -14,6 +15,7 @@ import {
 } from "./data";
 import { fetchWorkDetail } from "@/lib/api";
 import { CoreModal } from "./common/core-modal";
+import { groupEventSections } from "./event-sections";
 
 function EventCreatorList({
   creators,
@@ -77,6 +79,46 @@ export function WorkCard({
       </span>
     </button>
   );
+}
+
+export function EventCreditSections({
+  credits,
+  members,
+  memberHref,
+}: {
+  credits: EventCredit[];
+  members: Member[];
+  memberHref?: (id: string) => string;
+}) {
+  const headingId = useId();
+  return groupEventSections(credits).map((section, index) => {
+    const id = `${headingId}-section-${index}`;
+    return (
+      <section key={section.id} className="my-7 [&_a]:text-[var(--blue)] [&_a]:underline [&_h3]:mt-0 [&_h3]:mb-2.5 [&_h3]:text-base [&_table]:w-full [&_table]:min-w-md [&_table]:border-collapse [&_table]:text-sm [&_td]:border-b [&_td]:border-gray-200 [&_td]:px-2 [&_td]:py-2.5 [&_td]:text-left [&_td]:align-top [&_th]:border-b [&_th]:border-gray-200 [&_th]:px-2 [&_th]:py-2.5 [&_th]:text-left [&_th]:font-bold [&_th]:text-slate-500 [&_th]:align-top" aria-labelledby={id}>
+        <h3 id={id}>{section.name}</h3>
+        <div className="overflow-x-auto">
+          <table aria-labelledby={id}>
+            <thead>
+              <tr>
+                <th scope="col" className="w-16">順</th>
+                <th scope="col" className="w-1/3">作者</th>
+                <th scope="col">作品名 / 担当内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.items.map((credit) => (
+                <tr key={credit.id}>
+                  <td className="tabular-nums">{credit.trackNumber}</td>
+                  <td><EventCreatorList creators={credit.creatorIds} members={members} memberHref={memberHref} /></td>
+                  <td>{credit.workTitle}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  });
 }
 
 export function WorkModal({
@@ -145,12 +187,6 @@ export function WorkModal({
       : undefined;
   const bandcampEmbedUrl = bandcampLink?.embedUrl;
   const credits = eventWork?.credits ?? [];
-  const trackCredits = credits.filter(
-    (credit) => Number(credit.trackNumber) !== 0,
-  );
-  const metaCredits = credits.filter(
-    (credit) => Number(credit.trackNumber) === 0,
-  );
   return (
     <CoreModal ariaLabelledBy="modal-title" onClose={onClose}>
       <img
@@ -182,60 +218,7 @@ export function WorkModal({
           </div>
         )}
         <p className="my-7 text-sm leading-relaxed">{detail.description}</p>
-        {eventWork && trackCredits.length > 0 && (
-          <section className="my-7 [&_a]:text-[var(--blue)] [&_a]:underline [&_h3]:mt-0 [&_h3]:mb-2.5 [&_h3]:text-base [&_table]:w-full [&_table]:min-w-md [&_table]:border-collapse [&_table]:text-sm [&_td]:border-b [&_td]:border-gray-200 [&_td]:px-2 [&_td]:py-2.5 [&_td]:text-left [&_td]:align-top [&_th]:border-b [&_th]:border-gray-200 [&_th]:px-2 [&_th]:py-2.5 [&_th]:text-left [&_th]:font-bold [&_th]:text-slate-500 [&_th]:align-top [&_td:first-child]:w-20 [&_td:first-child]:tabular-nums [&_td:nth-child(2)]:w-1/3" aria-labelledby="credit-list-title">
-            <h3 id="credit-list-title">収録作品</h3>
-            <div className="overflow-x-auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">トラック</th>
-                    <th scope="col">作者</th>
-                    <th scope="col">作品名</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trackCredits.map((credit) => (
-                    <tr key={credit.id}>
-                      <td>{credit.trackNumber}</td>
-                      <td>
-                        <EventCreatorList
-                          creators={credit.creatorIds}
-                          members={members}
-                          memberHref={memberHref}
-                        />
-                      </td>
-                      <td>{credit.workTitle ?? credit.role ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-        {eventWork && metaCredits.length > 0 && (
-          <section className="my-7 [&_a]:text-[var(--blue)] [&_a]:underline [&_h3]:mt-0 [&_h3]:mb-2.5 [&_h3]:text-base [&_table]:w-full [&_table]:min-w-md [&_table]:border-collapse [&_table]:text-sm [&_td]:border-b [&_td]:border-gray-200 [&_td]:px-2 [&_td]:py-2.5 [&_td]:text-left [&_td]:align-top [&_td:first-child]:w-1/3" aria-labelledby="meta-credit-list-title">
-            <h3 id="meta-credit-list-title">制作協力</h3>
-            <div className="overflow-x-auto">
-              <table>
-                <tbody>
-                  {metaCredits.map((credit) => (
-                    <tr key={credit.id}>
-                      <td>
-                        <EventCreatorList
-                          creators={credit.creatorIds}
-                          members={members}
-                          memberHref={memberHref}
-                        />
-                      </td>
-                      <td>{credit.workTitle ?? credit.role ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+        {eventWork && <EventCreditSections credits={credits} members={members} memberHref={memberHref} />}
         {soundcloudEmbedUrl && (
           <div className="mb-6 overflow-hidden rounded-sm">
             <iframe

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -21,6 +22,7 @@ import {
   withBasePath,
 } from "../data";
 import { WorkCard, WorkModal } from "../work-ui";
+import { memberEventSections, type EventSection, type MemberEventCredit } from "../event-sections";
 import {
   type EventWorkDetailState,
   useEventWorkDetails,
@@ -93,44 +95,35 @@ function toEventWorkSummary(
   };
 }
 
-function trackNumber(
-  reference: MemberWorkReference,
-  work: EventWork,
-): number | string | undefined {
-  if (reference.isMeta) return undefined;
-  return work.credits?.find((credit) => credit.id === reference.creditId)
-    ?.trackNumber;
-}
-
-function compareReferences(
-  work: EventWork,
-  hasDetail: boolean,
-  a: MemberWorkReference,
-  b: MemberWorkReference,
-) {
-  if (Boolean(a.isMeta) !== Boolean(b.isMeta)) return a.isMeta ? -1 : 1;
-  if (!hasDetail) return 0;
-
-  const aNumber = trackNumber(a, work);
-  const bNumber = trackNumber(b, work);
-  if ((aNumber === undefined) !== (bNumber === undefined)) {
-    return aNumber === undefined ? -1 : 1;
-  }
-  const numericDifference = Number(aNumber) - Number(bNumber);
-  if (Number.isFinite(numericDifference) && numericDifference !== 0) {
-    return numericDifference;
-  }
-  return String(aNumber ?? "").localeCompare(String(bNumber ?? ""), "ja", {
-    numeric: true,
-  });
+export function MemberEventSections({ sections }: { sections: EventSection<MemberEventCredit>[] }) {
+  const headingId = useId();
+  return (
+    <div className="mt-4 ml-7 space-y-5 border-l-2 border-slate-200 pl-5 md:ml-20 md:pl-8">
+      {sections.map((section, index) => (
+        <section key={section.id} aria-labelledby={`${headingId}-${index}`}>
+          <h5 id={`${headingId}-${index}`} className="m-0 text-base font-bold md:text-lg">{section.name}</h5>
+          <ul className="mt-1 mb-0 list-none divide-y divide-slate-200 pl-0">
+            {section.items.map((credit) => (
+              <li key={credit.creditId} className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 py-3 text-sm leading-relaxed md:grid-cols-[5rem_minmax(0,1fr)] md:text-base">
+                <span className="font-['DM_Mono',monospace] tabular-nums text-slate-500" aria-label={`順 ${credit.trackNumber}`}>{credit.trackNumber}</span>
+                <h6 className="m-0 text-inherit font-normal">{credit.title}</h6>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
 }
 
 function EventWorkGroupCard({
   group,
+  memberId,
   loadDetail,
   openModal,
 }: {
   group: EventWorkGroup;
+  memberId: string;
   loadDetail: (id: string, priority?: boolean) => Promise<EventWork>;
   openModal: (work: EventWork) => void;
 }) {
@@ -158,48 +151,35 @@ function EventWorkGroupCard({
 
   return (
     <article ref={articleRef} aria-busy={isLoading || undefined}>
-      <button
-        className="group grid w-full cursor-pointer grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-5 border-0 bg-transparent p-0 text-left text-inherit transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400 motion-reduce:transition-none md:grid-cols-[9rem_minmax(0,1fr)] md:gap-8"
-        onClick={() => openModal(work)}
-      >
-        <span className="block aspect-square overflow-hidden bg-slate-200">
-          <img
-            className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 group-focus-visible:scale-105"
-            src={withBasePath(work.thumbnail)}
-            alt={`${work.title}のサムネイル`}
-            loading="lazy"
-          />
-        </span>
-        <span className="min-w-0">
-          <span className="block font-['DM_Mono',monospace] text-sm font-medium tracking-widest text-[var(--blue)] md:text-base">
-            {work.year || "—"}
+      <h4 className="m-0 font-normal">
+        <button
+          className="group grid w-full cursor-pointer grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-5 border-0 bg-transparent p-0 text-left text-inherit transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400 motion-reduce:transition-none md:grid-cols-[9rem_minmax(0,1fr)] md:gap-8"
+          onClick={() => openModal(work)}
+        >
+          <span className="block aspect-square overflow-hidden bg-slate-200">
+            <img
+              className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 group-focus-visible:scale-105"
+              src={withBasePath(work.thumbnail)}
+              alt={`${work.title}のサムネイル`}
+              loading="lazy"
+            />
           </span>
-          <strong className="mt-2 block text-xl leading-snug tracking-tight md:text-3xl">
-            {work.title || work.event}
-          </strong>
-          {work.event && work.event !== work.title && (
-            <span className="mt-1.5 block text-sm text-slate-500">
-              {work.event}
+          <span className="min-w-0">
+            <span className="block font-['DM_Mono',monospace] text-sm font-medium tracking-widest text-[var(--blue)] md:text-base">
+              {work.year || "—"}
             </span>
-          )}
-        </span>
-      </button>
-      <ul className="mt-4 ml-7 divide-y divide-slate-200 border-l-2 border-slate-200 pl-5 md:ml-20 md:pl-8">
-        {references.map((reference, index) => {
-          const number = trackNumber(reference, work);
-          return (
-            <li
-              className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 py-3 text-sm leading-relaxed md:grid-cols-[5rem_minmax(0,1fr)] md:text-base"
-              key={`${reference.creditId ?? reference.title}-${index}`}
-            >
-              <span className="font-['DM_Mono',monospace] tabular-nums text-slate-500">
-                {number === undefined ? "" : number}
+            <span className="mt-2 block font-bold text-xl leading-snug tracking-tight md:text-3xl">
+              {work.title || work.event}
+            </span>
+            {work.event && work.event !== work.title && (
+              <span className="mt-1.5 block text-sm text-slate-500">
+                {work.event}
               </span>
-              <span>{reference.title}</span>
-            </li>
-          );
-        })}
-      </ul>
+            )}
+          </span>
+        </button>
+      </h4>
+      <MemberEventSections sections={memberEventSections(references, memberId, detailState?.status === "ready" ? work : undefined)} />
       {detailState?.status === "error" && (
         <div className="mt-3 ml-7 flex flex-wrap items-center gap-3 text-sm md:ml-20">
           <span className="text-slate-500">詳細を取得できませんでした。</span>
@@ -251,12 +231,9 @@ export function MembersOnlyWorksBrowser({
   const eventGroups = useMemo<EventWorkGroup[]>(() => {
     const referencesByEventWork = new Map<string, MemberWorkReference[]>();
     references
-      .filter(
-        (reference) =>
-          reference.workKind === "EVENT" && Boolean(reference.eventWorkId),
-      )
+      .filter((reference) => reference.workKind === "EVENT")
       .forEach((reference) => {
-        const id = reference.eventWorkId as string;
+        const id = reference.eventWorkId;
         const group = referencesByEventWork.get(id) ?? [];
         group.push(reference);
         referencesByEventWork.set(id, group);
@@ -270,14 +247,7 @@ export function MembersOnlyWorksBrowser({
         return {
           work,
           detailState,
-          references: [...groupReferences].sort((a, b) =>
-            compareReferences(
-              work,
-              detailState?.status === "ready",
-              a,
-              b,
-            ),
-          ),
+          references: groupReferences,
         };
       })
       .sort(
@@ -318,6 +288,7 @@ export function MembersOnlyWorksBrowser({
               <EventWorkGroupCard
                 key={group.work.id}
                 group={group}
+                memberId={memberId}
                 loadDetail={load}
                 openModal={openEventWorkModal}
               />

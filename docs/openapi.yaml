@@ -1,419 +1,921 @@
 openapi: 3.0.3
 info:
-  title: AITC Web API
-  version: 1.0.0
+  title: AITC Web Data API
+  version: 3.0.0
   description: |
-    AITC Web の作品・メンバー情報を提供するAPIです。
-
-    イベント作品は公開します。メンバー情報と個人作品は、Discord OAuth2で
-    AITC Discordサーバーへの所属を確認できたユーザーだけが取得できます。
+    AITC Web のメンバー、イベント作品、個人作品、自己紹介カードを扱う API です。
+    DynamoDB のイベント作品本体・参加クレジット・メンバー作品参照を Lambda で結合して返します。
+    イベントクレジットはsectionId/sectionName/sectionOrderと1以上のtrackNumberを必須とし、旧isMeta/role形式は受け付けません。
+    Discord OAuth2 で許可Guildへの所属を確認し、`/auth/me` と `/members-only` 配下をBearer JWTで保護します。
 servers:
   - url: https://api.a-i-t-c.com
-    description: Production
-tags:
-  - name: Auth
-  - name: EventWorks
-  - name: Members
-  - name: PersonalWorks
+    description: Production custom domain (to be configured)
+  - url: '{apiEndpoint}'
+    description: API Gateway default endpoint
+    variables:
+      apiEndpoint:
+        default: https://example.execute-api.ap-northeast-1.amazonaws.com
 paths:
-  /auth/discord/login:
+  /auth/login:
     get:
-      tags: [Auth]
-      summary: Discordログインを開始する
-      description: Discord OAuth2の認可画面へリダイレクトします。
+      summary: Discord OAuth認証を開始
+      operationId: beginDiscordLogin
+      parameters:
+        - name: return_origin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: attempt
+          in: query
+          required: true
+          description: crypto.randomUUID()で生成したUUID v4
+          schema:
+            type: string
+            format: uuid
       responses:
-        "302":
-          description: Discord OAuth2認可画面へのリダイレクト
+        '302':
+          description: state Cookieを設定してDiscordへリダイレクト
           headers:
             Location:
               schema:
                 type: string
                 format: uri
-
-  /auth/discord/callback:
+        '400':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /auth/callback:
     get:
-      tags: [Auth]
-      summary: Discord OAuth2コールバックを処理する
+      summary: Discord OAuthコールバック
+      operationId: completeDiscordLogin
       parameters:
-        - $ref: "#/components/parameters/OAuthCode"
-        - $ref: "#/components/parameters/OAuthState"
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: error
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
-        "302":
-          description: 認証結果に応じたフロントエンドへのリダイレクト
-          headers:
-            Location:
+        '200':
+          description: 検証済みOriginへJWTをpostMessageするHTML
+          content:
+            text/html:
               schema:
                 type: string
-                format: uri
-            Set-Cookie:
-              description: 認証成功時に発行するSecure・HttpOnlyなセッションCookie
+        '400':
+          description: OAuth拒否またはstate不正を示すno-store HTML
+          content:
+            text/html:
               schema:
                 type: string
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-  /auth/session:
+        '403':
+          description: 許可Guildに所属していない
+          content:
+            text/html:
+              schema:
+                type: string
+        '502':
+          description: Discord API異常
+          content:
+            text/html:
+              schema:
+                type: string
+        '503':
+          description: 認証Secretを利用できない
+          content:
+            text/html:
+              schema:
+                type: string
+  /auth/me:
     get:
-      tags: [Auth]
-      summary: 現在の認証状態を取得する
+      summary: 現在のJWT認証情報を確認
+      operationId: getAuthenticatedIdentity
       security:
-        - sessionCookie: []
+        - bearerAuth: []
       responses:
-        "200":
-          description: 認証済み
+        '200':
+          description: 検証済みの認証情報とDiscordプロフィール
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Session"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /auth/logout:
-    post:
-      tags: [Auth]
-      summary: ログアウトする
-      security:
-        - sessionCookie: []
-      responses:
-        "204":
-          description: セッションCookieを削除しました
-          headers:
-            Set-Cookie:
-              schema:
-                type: string
-                example: aitc_session=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /event-works:
+                $ref: '#/components/schemas/AuthMeResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only:
     get:
-      tags: [EventWorks]
-      summary: イベント作品一覧を取得する
-      description: 認証不要で閲覧できる公開APIです。
-      parameters:
-        - $ref: "#/components/parameters/Year"
-        - $ref: "#/components/parameters/WorkType"
-        - $ref: "#/components/parameters/Sort"
+      summary: メンバー限定APIの認可確認
+      operationId: getMembersOnly
+      security:
+        - bearerAuth: []
       responses:
-        "200":
-          description: イベント作品一覧
+        '200':
+          description: メンバー限定アクセス成功
           content:
             application/json:
               schema:
-                type: object
-                required: [items]
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/EventWork"
-
-  /members:
+                $ref: '#/components/schemas/MembersOnlyResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/members:
     get:
-      tags: [Members]
-      summary: メンバー一覧を取得する
-      parameters:
-        - $ref: "#/components/parameters/Generation"
-        - $ref: "#/components/parameters/Department"
+      summary: メンバー限定のメンバー一覧を取得
+      operationId: listMembersOnlyMembers
+      description: 認証済みユーザーに全メンバーを返します。旧 `/members` と同じクエリおよびレスポンスを使用します。
+      security:
+        - bearerAuth: []
       responses:
-        "200":
+        '200':
           description: メンバー一覧
           content:
             application/json:
               schema:
-                type: object
-                required: [items]
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Member"
-  /members/{id}:
+                $ref: '#/components/schemas/MemberListResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/members/{id}:
     get:
-      tags: [Members]
-      summary: メンバー詳細を取得する
+      summary: メンバー限定のメンバー詳細を取得
+      operationId: getMembersOnlyMember
       parameters:
-        - $ref: "#/components/parameters/MemberId"
+        - $ref: '#/components/parameters/Id'
+      security:
+        - bearerAuth: []
       responses:
-        "200":
+        '200':
           description: メンバー詳細
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Member"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/Member'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/members/{id}/works:
+    get:
+      summary: メンバー限定のメンバー作品一覧を取得
+      operationId: listMembersOnlyMemberWorks
+      description: 認証済みユーザーに作品一覧を返します。メンバーIDが存在しない場合も空の一覧を返します。
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: イベント参加作品と個人作品を含む一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberWorkListResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/event-works:
+    get:
+      summary: メンバー向けイベント作品一覧を取得
+      operationId: listMembersOnlyEventWorks
+      description: Discord 認証済みユーザーに AITC と ITC の全イベント作品を返します。
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: AITC と ITC のイベント作品一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventWorkListResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/event-works/{id}:
+    get:
+      summary: メンバー向けイベント作品詳細を取得
+      operationId: getMembersOnlyEventWork
+      description: Discord 認証済みユーザーに、AITC または ITC の指定イベント作品を返します。
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: イベント作品本体と参加者・収録作品
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventWorkDetail'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/introduction-cards:
+    get:
+      summary: 自己紹介カード一覧を取得
+      operationId: listIntroductionCards
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 一覧表示用の自己紹介カード
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntroductionCardListResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+    post:
+      summary: 自己紹介カードを作成
+      operationId: createIntroductionCard
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntroductionCardInput'
+      responses:
+        '201':
+          description: 作成した自己紹介カード
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntroductionCard'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /members-only/introduction-cards/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: 自己紹介カード詳細を取得
+      operationId: getIntroductionCard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 自己紹介カード詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntroductionCard'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthError'
+    put:
+      summary: 自己紹介カードを部分更新
+      operationId: updateIntroductionCard
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntroductionCardUpdate'
+      responses:
+        '200':
+          description: 更新後の自己紹介カード
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntroductionCard'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/AuthError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthError'
+    delete:
+      summary: 自己紹介カードを削除
+      description: JWT の `is_admin` が true のサイト管理者だけが実行できます。
+      operationId: deleteIntroductionCard
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/AuthError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthError'
+  /event-works:
+    get:
+      summary: イベント作品一覧を取得
+      operationId: listEventWorks
+      description: AITC のイベント作品だけを返します。ITC の作品は含みません。作品形態による絞り込みと並び替えはフロントエンドで行います。
+      responses:
+        '200':
+          description: イベント作品一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventWorkListResponse'
+  /event-works/{id}:
+    get:
+      summary: イベント作品詳細を取得
+      operationId: getEventWork
+      description: AITC のイベント作品を返します。ITC の作品 ID を指定した場合は 404 を返します。
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: イベント作品本体と参加者・収録作品
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventWorkDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /personal-works:
     get:
-      tags: [PersonalWorks]
-      summary: 個人作品一覧を取得する
+      summary: 個人作品一覧を取得
+      operationId: listPersonalWorks
+      description: creatorIdを指定した場合は、そのメンバーの個人作品投影をQueryして返します。
       parameters:
-        - $ref: "#/components/parameters/Year"
-        - $ref: "#/components/parameters/WorkType"
-        - $ref: "#/components/parameters/CreatorId"
-        - $ref: "#/components/parameters/Sort"
+        - name: creatorId
+          in: query
+          required: false
+          description: 指定したメンバーの個人作品だけを返します。
+          schema:
+            type: string
       responses:
-        "200":
+        '200':
           description: 個人作品一覧
           content:
             application/json:
               schema:
-                type: object
-                required: [items]
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PersonalWork"
-
-  /event-works/{id}:
-    get:
-      tags: [EventWorks]
-      summary: イベント作品詳細を取得する
-      parameters:
-        - $ref: "#/components/parameters/WorkId"
-      responses:
-        "200":
-          description: イベント作品詳細
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventWork"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/PersonalWorkListResponse'
   /personal-works/{id}:
     get:
-      tags: [PersonalWorks]
-      summary: 個人作品詳細を取得する
+      summary: 個人作品詳細を取得
+      operationId: getPersonalWork
       parameters:
-        - $ref: "#/components/parameters/WorkId"
+        - $ref: '#/components/parameters/Id'
       responses:
-        "200":
+        '200':
           description: 個人作品詳細
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PersonalWork"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/PersonalWork'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /members:
+    get:
+      summary: メンバー一覧を取得
+      operationId: listMembers
+      deprecated: true
+      description: |
+        認証不要の旧APIです。後のバージョンで削除予定です。新規利用では `/members-only/members` を使用してください。
+        全メンバーを返します。部門、所属期、役職による複合フィルタはフロントエンドで行います。
+      responses:
+        '200':
+          description: メンバー一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberListResponse'
+  /members/{id}:
+    get:
+      summary: メンバー詳細を取得
+      operationId: getMember
+      deprecated: true
+      description: 認証不要の旧APIです。後のバージョンで削除予定です。新規利用では `/members-only/members/{id}` を使用してください。
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: メンバー詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /members/{id}/works:
+    get:
+      summary: メンバーの作品一覧を取得
+      operationId: listMemberWorks
+      deprecated: true
+      description: 認証不要の旧APIです。後のバージョンで削除予定です。新規利用では `/members-only/members/{id}/works` を使用してください。作品一覧の並び替えはフロントエンドで行います。
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: イベント参加作品と個人作品を含む一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberWorkListResponse'
 components:
   securitySchemes:
-    sessionCookie:
-      type: apiKey
-      in: cookie
-      name: aitc_session
-
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
-    OAuthCode:
-      name: code
-      in: query
-      required: true
-      schema:
-        type: string
-    OAuthState:
-      name: state
-      in: query
-      required: true
-      schema:
-        type: string
-    MemberId:
+    Id:
       name: id
       in: path
       required: true
       schema:
         type: string
-        example: akatsuki
-    WorkId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        example: aitc_1
-    CreatorId:
-      name: creatorId
-      in: query
-      schema:
-        type: string
-        example: akatsuki
-    Year:
-      name: year
-      in: query
-      schema:
-        type: integer
-        minimum: 2000
-        example: 2025
-    Generation:
-      name: generation
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        example: 12
-    Department:
-      name: department
-      in: query
-      schema:
-        $ref: "#/components/schemas/Department"
-    WorkType:
-      name: type
-      in: query
-      schema:
-        $ref: "#/components/schemas/WorkType"
-    Sort:
-      name: sort
-      in: query
-      schema:
-        type: string
-        enum: [newest, oldest, title]
-        default: newest
-
   responses:
-    BadRequest:
-      description: リクエストが不正です
+    AuthError:
+      description: 認証または認可エラー
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
-    Unauthorized:
-      description: 認証が必要です
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-    Forbidden:
-      description: AITC Discordサーバーへの所属を確認できません
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/AuthErrorResponse'
     NotFound:
-      description: 指定されたリソースは存在しません
+      description: 対象データが見つからない
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
-
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: 入力エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 操作権限がない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
-    Session:
+    AuthMeResponse:
       type: object
-      required: [authenticated, user]
+      required:
+        - authenticated
+        - discord_user_id
+        - username
+        - avatar_url
+        - guilds
+        - is_admin
+        - expires_at
       properties:
         authenticated:
           type: boolean
-          example: true
-        user:
-          type: object
-          required: [id, username]
-          properties:
-            id:
-              type: string
-              description: Discord User ID
-              example: "123456789012345678"
-            username:
-              type: string
-              example: aitc_member
-
-    Member:
+          enum: [true]
+        discord_user_id:
+          type: string
+        username:
+          type: string
+          minLength: 2
+          maxLength: 32
+          description: Discordのユーザー名
+        avatar_url:
+          type: string
+          format: uri
+          description: Discord CDNのカスタムまたはデフォルトアバターURL
+        guilds:
+          type: array
+          items:
+            type: string
+        is_admin:
+          type: boolean
+        expires_at:
+          type: integer
+          format: int64
+    MembersOnlyResponse:
       type: object
-      required: [id, name, generation, department, links]
+      required: [message]
+      properties:
+        message:
+          type: string
+          enum: [Members-only access granted.]
+    AuthErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id]
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_REQUEST
+                - OAUTH_DENIED
+                - INVALID_STATE
+                - TOKEN_MISSING
+                - TOKEN_INVALID
+                - TOKEN_EXPIRED
+                - ORIGIN_NOT_ALLOWED
+                - NOT_A_MEMBER
+                - DISCORD_UPSTREAM_ERROR
+                - AUTH_UNAVAILABLE
+            message:
+              type: string
+            request_id:
+              type: string
+    EventWorkListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventWork'
+    PersonalWorkListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonalWork'
+    MemberListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+    MemberWorkListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberWorkReference'
+    IntroductionCardListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntroductionCardSummary'
+    IntroductionWork:
+      type: object
+      additionalProperties: false
+      required: [type, source]
+      properties:
+        type:
+          type: string
+          enum: [img, link]
+        source:
+          type: string
+    IntroductionCardInput:
+      type: object
+      additionalProperties: false
+      required: [name, generation, department, universityDepartment, techStack, works, iconThumbnail, description]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        generation:
+          type: integer
+          minimum: 0
+        department:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Department'
+        universityDepartment:
+          type: string
+        techStack:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+        works:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/IntroductionWork'
+        iconThumbnail:
+          type: string
+        description:
+          type: string
+    IntroductionCardUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/name'
+        generation:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/generation'
+        department:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/department'
+        universityDepartment:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/universityDepartment'
+        techStack:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/techStack'
+        works:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/works'
+        iconThumbnail:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/iconThumbnail'
+        description:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/description'
+    IntroductionCard:
+      type: object
+      additionalProperties: false
+      required: [id, name, generation, department, universityDepartment, techStack, works, iconThumbnail, description, createdAt, updatedAt]
       properties:
         id:
           type: string
-          example: akatsuki
+          format: uuid
+        name:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/name'
+        generation:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/generation'
+        department:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/department'
+        universityDepartment:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/universityDepartment'
+        techStack:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/techStack'
+        works:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/works'
+        iconThumbnail:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/iconThumbnail'
+        description:
+          $ref: '#/components/schemas/IntroductionCardInput/properties/description'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    IntroductionCardSummary:
+      type: object
+      required: [id, name, works, iconThumbnail]
+      properties:
+        id:
+          type: string
+          format: uuid
         name:
           type: string
-          example: 赤月
-        generation:
+        works:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntroductionWork'
+        iconThumbnail:
+          type: string
+    EventWork:
+      type: object
+      required: [id, eventName, title, type, releasedAt]
+      properties:
+        id:
+          type: string
+        eventName:
+          type: string
+        title:
+          type: string
+          description: 頒布物・イベント作品の名称
+        type:
+          $ref: '#/components/schemas/WorkType'
+        description:
+          type: string
+        releasedAt:
+          type: string
+        creatorIds:
+          type: array
+          description: 参加クレジットから導出した重複なしの作者識別子。有効メンバーはID、除外・未登録作者は作者名
+          items:
+            type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+    EventWorkDetail:
+      allOf:
+        - $ref: '#/components/schemas/EventWork'
+        - type: object
+          required: [credits]
+          properties:
+            credits:
+              description: sectionOrder、trackNumberの昇順。セクション情報は各クレジットから導出する
+              type: array
+              items:
+                $ref: '#/components/schemas/EventCredit'
+    EventCredit:
+      type: object
+      additionalProperties: false
+      required: [id, sectionId, sectionName, sectionOrder, trackNumber, workTitle, type, creatorIds, releasedAt]
+      properties:
+        id:
+          type: string
+          description: URLエンコードしたsectionIdと「:track-{trackNumber}」を連結したイベント内で一意のID
+          example: music:track-1
+        sectionId:
+          type: string
+          minLength: 1
+          description: イベント内で一意のセクションID。別イベントでは再利用できる
+        sectionName:
+          type: string
+          minLength: 1
+        sectionOrder:
           type: integer
-          example: 12
+          minimum: 1
+          description: イベント内でのCSV初出順。同じsectionIdでは名前と順序が一致する
+        trackNumber:
+          type: integer
+          minimum: 1
+          maximum: 9999
+          description: セクション内の表示順。同じセクション内で一意。メタデータも1以上
+        workTitle:
+          type: string
+          minLength: 1
+          description: 作品名または表紙・Directionなどの担当内容
+        type:
+          $ref: '#/components/schemas/WorkType'
+        releasedAt:
+          type: string
+        creatorIds:
+          type: array
+          minItems: 1
+          description: 登録作者はcreatorId、除外・未登録作者はmemberNameだけを設定
+          items:
+            $ref: '#/components/schemas/EventCreator'
+    EventCreator:
+      type: object
+      required: [memberName, creatorId]
+      description: memberNameとcreatorIdのどちらか一方だけが文字列になる作者情報
+      properties:
+        memberName:
+          type: string
+          nullable: true
+          description: 除外・未登録作者の表示名
+        creatorId:
+          type: string
+          nullable: true
+          description: 登録済みメンバーのID
+    PersonalWork:
+      type: object
+      required: [id, title, creatorIds, type, description, createdAt, links]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        creatorIds:
+          type: array
+          items:
+            type: string
+        type:
+          $ref: '#/components/schemas/WorkType'
+        createdAt:
+          type: string
+          format: date
+        description:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+    Member:
+      type: object
+      required: [id, name, department, generation, roles]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
         department:
           type: array
           items:
-            $ref: "#/components/schemas/Department"
-          example: [CG, MV]
-        icon:
-          type: string
-          format: uri
-          example: https://d1tie8g2r03vuj.cloudfront.net/user-icon/akatsuki_icon.png
+            $ref: '#/components/schemas/Department'
+        generation:
+          type: integer
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
         profile:
           type: string
-          example: イラストと映像を制作しています。
+          nullable: true
         links:
           type: array
           items:
-            $ref: "#/components/schemas/Link"
-
-    EventWork:
+            $ref: '#/components/schemas/Link'
+    MemberWorkReference:
+      oneOf:
+        - $ref: '#/components/schemas/EventMemberWorkReference'
+        - $ref: '#/components/schemas/PersonalMemberWorkReference'
+      discriminator:
+        propertyName: workKind
+        mapping:
+          EVENT: '#/components/schemas/EventMemberWorkReference'
+          PERSONAL: '#/components/schemas/PersonalMemberWorkReference'
+    EventMemberWorkReference:
       type: object
-      required:
-        - id
-        - title
-        - thumbnail
-        - type
-        - description
-        - creatorIds
-        - event
-        - year
-        - links
+      additionalProperties: false
+      required: [workKind, eventWorkId, creditId, eventName, eventWorkTitle, title, type, releasedAt, sectionId, sectionName, sectionOrder, trackNumber]
       properties:
-        id:
+        workKind:
           type: string
-          example: e6
+          enum: [EVENT]
+        eventWorkId:
+          type: string
+        creditId:
+          $ref: '#/components/schemas/EventCredit/properties/id'
+        eventName:
+          type: string
+        eventWorkTitle:
+          type: string
         title:
           type: string
-          example: AITC Calendar
-        thumbnail:
-          type: string
-          format: uri-reference
-          example: /images/eventWorks/AITC_calendar.png
         type:
-          $ref: "#/components/schemas/WorkType"
-        description:
+          $ref: '#/components/schemas/WorkType'
+        releasedAt:
+          type: string
+        sectionId:
+          $ref: '#/components/schemas/EventCredit/properties/sectionId'
+        sectionName:
+          $ref: '#/components/schemas/EventCredit/properties/sectionName'
+        sectionOrder:
+          $ref: '#/components/schemas/EventCredit/properties/sectionOrder'
+        trackNumber:
+          $ref: '#/components/schemas/EventCredit/properties/trackNumber'
+    PersonalMemberWorkReference:
+      type: object
+      additionalProperties: false
+      required: [workKind, personalWorkId, title, creatorIds, type, description, createdAt, links]
+      properties:
+        workKind:
+          type: string
+          enum: [PERSONAL]
+        personalWorkId:
+          type: string
+        title:
           type: string
         creatorIds:
           type: array
           items:
             type: string
-        creators:
-          description: 公開表示用の作者名。メンバーAPIを呼ばずにイベント作品を表示するために返します。
-          type: array
-          items:
-            $ref: "#/components/schemas/CreatorSummary"
-        event:
-          type: string
-          example: COMITIA 153
-        year:
-          type: integer
-          example: 2025
-        links:
-          type: array
-          items:
-            $ref: "#/components/schemas/Link"
-
-    PersonalWork:
-      type: object
-      required:
-        [id, title, thumbnail, creatorIds, type, description, createdAt, links]
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        thumbnail:
-          type: string
-          format: uri-reference
-        creatorIds:
-          type: array
-          items:
-            type: string
         type:
-          $ref: "#/components/schemas/WorkType"
+          $ref: '#/components/schemas/WorkType'
         description:
           type: string
         createdAt:
@@ -422,17 +924,7 @@ components:
         links:
           type: array
           items:
-            $ref: "#/components/schemas/Link"
-
-    CreatorSummary:
-      type: object
-      required: [id, name]
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-
+            $ref: '#/components/schemas/Link'
     Link:
       type: object
       required: [name, url]
@@ -445,20 +937,18 @@ components:
         embedUrl:
           type: string
           format: uri
-          description: SoundCloudまたはBandcampの埋め込みURL
-
+    WorkType:
+      type: string
+      enum: [Illustration, Programming, Movie, Music, MusicAndIllustration, WorkInfo, Tool, Other]
     Department:
       type: string
       enum: [CG, DTM, PROG, MV]
-
-    WorkType:
+    Role:
       type: string
-      enum: [Illustration, Programming, Movie, Music, Tool, Other]
-
-    Error:
+      enum: [REPRESENTATIVE, CG_LEAD, DTM_LEAD, PROG_LEAD, MV_LEAD]
+    ErrorResponse:
       type: object
       required: [message]
       properties:
         message:
           type: string
-          example: Authentication is required.

@@ -7,6 +7,8 @@ import type {
   Work,
   WorkType,
 } from "@/components/data";
+import { groupEventSections } from "@/components/event-sections";
+import { typeLabel } from "@/components/data";
 
 const apiBaseUrl = (
   process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -81,8 +83,30 @@ function normalizeMember(
   };
 }
 
-export function normalizeEventWork(work: ApiWork): EventWork {
+export function normalizeEventWork(work: ApiWork, requireCredits = false): EventWork {
   const releasedAt = work.releasedAt ?? "";
+  if (requireCredits && !Array.isArray(work.credits)) throw new Error("Event detail is missing credits.");
+  const credits = work.credits?.map((credit) => {
+    if (typeof credit.id !== "string" || !credit.id ||
+        typeof credit.workTitle !== "string" || !credit.workTitle.trim() ||
+        !Array.isArray(credit.creatorIds) || !credit.creatorIds.length ||
+        !Object.hasOwn(typeLabel, credit.type)) {
+      throw new Error("Invalid event credit data.");
+    }
+    const creatorIds = credit.creatorIds.map((creator) =>
+      typeof creator === "string" ? { memberName: null, creatorId: creator } : creator,
+    );
+    if (creatorIds.some((creator) => !creator ||
+        !((typeof creator.creatorId === "string" && Boolean(creator.creatorId) && creator.memberName === null) ||
+          (typeof creator.memberName === "string" && Boolean(creator.memberName) && creator.creatorId === null)))) {
+      throw new Error("Invalid event creator data.");
+    }
+    return {
+      ...credit,
+      creatorIds,
+    };
+  });
+  const sortedCredits = credits === undefined ? undefined : groupEventSections(credits).flatMap((section) => section.items);
   return {
     id: work.id,
     title: work.title,
@@ -93,14 +117,7 @@ export function normalizeEventWork(work: ApiWork): EventWork {
     event: work.event ?? work.eventName ?? "",
     year: work.year ?? (Number(releasedAt.slice(0, 4)) || 0),
     links: work.links ?? [],
-    credits: (work.credits ?? []).map((credit) => ({
-      ...credit,
-      creatorIds: credit.creatorIds.map((creator) =>
-        typeof creator === "string"
-          ? { memberName: null, creatorId: creator }
-          : creator,
-      ),
-    })),
+    credits: sortedCredits,
   };
 }
 
@@ -159,7 +176,7 @@ export async function fetchMemberWorks(id: string): Promise<Work[]> {
 
 export async function fetchEventWorks(): Promise<EventWork[]> {
   const response = await request<ApiList<ApiWork>>("/event-works");
-  return response.items.map(normalizeEventWork);
+  return response.items.map((work) => normalizeEventWork(work));
 }
 
 export async function fetchEventWork(
@@ -168,6 +185,7 @@ export async function fetchEventWork(
 ): Promise<EventWork> {
   return normalizeEventWork(
     await request<ApiWork>(`/event-works/${encodeURIComponent(id)}`, signal),
+    true,
   );
 }
 

@@ -4,6 +4,7 @@ export type WorkType =
   | "Movie"
   | "Music"
   | "MusicAndIllustration"
+  | "WorkInfo"
   | "Tool"
   | "Other";
 
@@ -31,11 +32,13 @@ export type EventCreator = {
 
 export type EventCredit = {
   id: string;
-  trackNumber: number | string;
+  sectionId: string;
+  sectionName: string;
+  sectionOrder: number;
+  trackNumber: number;
   creatorIds: EventCreator[];
-  workTitle?: string;
-  role?: string;
-  isMeta?: boolean;
+  workTitle: string;
+  type: WorkType;
 };
 
 export type EventWork = {
@@ -71,6 +74,7 @@ export const typeLabel: Record<WorkType, string> = {
   Movie: "動画",
   Music: "音楽",
   MusicAndIllustration: "音楽+イラスト",
+  WorkInfo: "作品情報",
   Tool: "ツール",
   Other: "その他",
 };

@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:oauth": "next dev -p 5173",
     "build": "next build",
+    "test": "node --test tests",
     "start": "next start",
     "lint": "next lint"
   },
