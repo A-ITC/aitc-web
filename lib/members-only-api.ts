@@ -1,6 +1,7 @@
 import { apiBaseUrl } from "./api-config";
 import { normalizeEventWork, type ApiWork } from "./api";
 import type { EventWork, Link, WorkType } from "@/components/data";
+import { groupEventSections, validateSectionInfo, type EventSectionInfo } from "@/components/event-sections";
 
 export type MemberRole =
   | "REPRESENTATIVE"
@@ -23,12 +24,9 @@ export type MembersOnlyMember = {
   }>;
 };
 
-export type MemberWorkReference = {
-  workKind: "EVENT" | "PERSONAL";
+type MemberWorkReferenceBase = {
   title: string;
   type?: WorkType;
-  eventWorkId?: string;
-  creditId?: string;
   eventName?: string;
   eventWorkTitle?: string;
   personalWorkId?: string;
@@ -37,8 +35,28 @@ export type MemberWorkReference = {
   links?: Link[];
   releasedAt?: string;
   createdAt?: string;
-  isMeta?: boolean;
 };
+
+export type MemberWorkReference = MemberWorkReferenceBase & (
+  | ({ workKind: "EVENT"; eventWorkId: string; creditId: string } & EventSectionInfo)
+  | { workKind: "PERSONAL"; personalWorkId: string }
+);
+
+export function normalizeMemberWorkReferences(items: MemberWorkReference[]): MemberWorkReference[] {
+  const events = new Map<string, Extract<MemberWorkReference, { workKind: "EVENT" }>[]>();
+  for (const item of items) {
+    if (item.workKind === "PERSONAL") continue;
+    if (item.workKind !== "EVENT" || !item.eventWorkId || !item.creditId) {
+      throw new Error("Invalid member work reference.");
+    }
+    validateSectionInfo(item);
+    const references = events.get(item.eventWorkId) ?? [];
+    references.push(item);
+    events.set(item.eventWorkId, references);
+  }
+  for (const references of events.values()) groupEventSections(references);
+  return items;
+}
 
 type ItemList<T> = { items: T[] };
 
@@ -113,7 +131,7 @@ export async function fetchMembersOnlyMemberWorks(
     accessToken,
     signal,
   );
-  return response.items;
+  return normalizeMemberWorkReferences(response.items);
 }
 
 export async function fetchMembersOnlyEventWorks(
@@ -125,7 +143,7 @@ export async function fetchMembersOnlyEventWorks(
     accessToken,
     signal,
   );
-  return response.items.map(normalizeEventWork);
+  return response.items.map((work) => normalizeEventWork(work));
 }
 
 export async function fetchMembersOnlyEventWork(
@@ -139,5 +157,6 @@ export async function fetchMembersOnlyEventWork(
       accessToken,
       signal,
     ),
+    true,
   );
 }

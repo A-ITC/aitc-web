@@ -1,9 +1,12 @@
 export type WorkType =
   | "Illustration"
+  | "3DCG"
+  | "Game"
   | "Programming"
   | "Movie"
   | "Music"
   | "MusicAndIllustration"
+  | "WorkInfo"
   | "Tool"
   | "Other";
 
@@ -31,11 +34,13 @@ export type EventCreator = {
 
 export type EventCredit = {
   id: string;
-  trackNumber: number | string;
+  sectionId: string;
+  sectionName: string;
+  sectionOrder: number;
+  trackNumber: number;
   creatorIds: EventCreator[];
-  workTitle?: string;
-  role?: string;
-  isMeta?: boolean;
+  workTitle: string;
+  type: WorkType;
 };
 
 export type EventWork = {
@@ -67,10 +72,13 @@ export type CollectionKind = "event" | "personal";
 
 export const typeLabel: Record<WorkType, string> = {
   Illustration: "イラスト",
+  "3DCG": "3DCG",
+  Game: "ゲーム",
   Programming: "プログラミング",
   Movie: "動画",
   Music: "音楽",
   MusicAndIllustration: "音楽+イラスト",
+  WorkInfo: "作品情報",
   Tool: "ツール",
   Other: "その他",
 };
