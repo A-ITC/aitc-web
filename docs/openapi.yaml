@@ -939,7 +939,7 @@ components:
           format: uri
     WorkType:
       type: string
-      enum: [Illustration, Programming, Movie, Music, MusicAndIllustration, WorkInfo, Tool, Other]
+      enum: [Illustration, '3DCG', Game, Programming, Movie, Music, MusicAndIllustration, WorkInfo, Tool, Other]
     Department:
       type: string
       enum: [CG, DTM, PROG, MV]

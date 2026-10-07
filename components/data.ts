@@ -1,5 +1,7 @@
 export type WorkType =
   | "Illustration"
+  | "3DCG"
+  | "Game"
   | "Programming"
   | "Movie"
   | "Music"
@@ -70,6 +72,8 @@ export type CollectionKind = "event" | "personal";
 
 export const typeLabel: Record<WorkType, string> = {
   Illustration: "イラスト",
+  "3DCG": "3DCG",
+  Game: "ゲーム",
   Programming: "プログラミング",
   Movie: "動画",
   Music: "音楽",

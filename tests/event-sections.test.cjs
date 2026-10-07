@@ -93,6 +93,21 @@ test("old or inconsistent section data fails normalization", () => {
   assert.deepEqual(normalizeMemberWorkReferences(references), references);
 });
 
+test("3DCG and Game keep their types and labels in event details and member references", () => {
+  for (const [type, label] of [["3DCG", "3DCG"], ["Game", "ゲーム"]]) {
+    const item = { ...credits[0], type };
+    const work = normalizeEventWork({ ...apiWork, type, credits: [item] }, true);
+    assert.equal(work.type, type);
+    assert.equal(work.credits[0].type, type);
+    const ownReferences = normalizeMemberWorkReferences([{ ...references[0], type }]);
+    assert.equal(ownReferences[0].type, type);
+    const html = renderToStaticMarkup(React.createElement(WorkModal, {
+      work, kind: "event", works: [], members: directory, onClose() {},
+    }));
+    assert.ok(html.includes(label));
+  }
+});
+
 test("individual works stay separate from event sections", () => {
   const personal = { workKind: "PERSONAL", personalWorkId: "art-1", title: "My personal illustration", type: "Illustration", createdAt: "2026-01-01" };
   const html = renderToStaticMarkup(React.createElement(MembersOnlyWorksBrowser, {

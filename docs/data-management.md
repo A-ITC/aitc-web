@@ -82,7 +82,7 @@
 ## 共通ルール
 
 - `creatorIds` は必ず `members.json` に存在する `id` を指定します。
-- 作品種別には `Illustration`、`Programming`、`Movie`、`Music`、`MusicAndIllustration`、`WorkInfo`（作品情報）、`Tool`、`Other` を使います。
+- 作品種別には `Illustration`、`3DCG`、`Game`（ゲーム）、`Programming`、`Movie`、`Music`、`MusicAndIllustration`、`WorkInfo`（作品情報）、`Tool`、`Other` を使います。
 - 日付は `YYYY-MM-DD` 形式、年は4桁の数値を使います。
 - 外部リンクを用意しない場合は、`links` を空配列 `[]` にできます。
 - Bandcamp をモーダル内で再生する場合は、Bandcamp の「Share / Embed」から取得したプレーヤーURLを、Bandcampリンクの `embedUrl` に設定します。`embedUrl` がない通常のリンクは、外部リンクとしてのみ表示されます。
