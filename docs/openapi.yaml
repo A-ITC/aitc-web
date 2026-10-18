@@ -739,6 +739,10 @@ components:
           type: string
         releasedAt:
           type: string
+          format: date
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          description: 実在する発行日（YYYY-MM-DD）。年・年度・年月のみの値は不可
+          example: '2026-05-30'
         creatorIds:
           type: array
           description: 参加クレジットから導出した重複なしの作者識別子。有効メンバーはID、除外・未登録作者は作者名
@@ -792,6 +796,10 @@ components:
           $ref: '#/components/schemas/WorkType'
         releasedAt:
           type: string
+          format: date
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          description: 実在する発行日（YYYY-MM-DD）。年・年度・年月のみの値は不可
+          example: '2026-05-30'
         creatorIds:
           type: array
           minItems: 1
@@ -890,6 +898,10 @@ components:
           $ref: '#/components/schemas/WorkType'
         releasedAt:
           type: string
+          format: date
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          description: 実在する発行日（YYYY-MM-DD）。年・年度・年月のみの値は不可
+          example: '2026-05-30'
         sectionId:
           $ref: '#/components/schemas/EventCredit/properties/sectionId'
         sectionName:
