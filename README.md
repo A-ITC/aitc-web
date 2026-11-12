@@ -66,6 +66,8 @@ npm install
 npm run dev
 ```
 
+Discord ログインを確認する場合は、dev の API URL を設定してポート 5173 で起動します。[Discord ログインの開発手順](./docs/discord-auth-architecture.md#開発環境での確認)
+
 ## テスト
 
 ```bash

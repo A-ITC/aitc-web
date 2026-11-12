@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: AITC Web Data API
-  version: 3.0.0
+  version: 4.0.0
   description: |
     AITC Web のメンバー、イベント作品、個人作品、自己紹介カードを扱う API です。
     DynamoDB のイベント作品本体・参加クレジット・メンバー作品参照を Lambda で結合して返します。
     イベントクレジットはsectionId/sectionName/sectionOrderと1以上のtrackNumberを必須とし、旧isMeta/role形式は受け付けません。
-    Discord OAuth2 で許可Guildへの所属を確認し、`/auth/me` と `/members-only` 配下をBearer JWTで保護します。
+    `/auth/me` と `/members-only` 配下では、Auth API に Bearer JWT の検証を委譲します。
 servers:
   - url: https://api.a-i-t-c.com
     description: Production custom domain (to be configured)
@@ -16,89 +16,6 @@ servers:
       apiEndpoint:
         default: https://example.execute-api.ap-northeast-1.amazonaws.com
 paths:
-  /auth/login:
-    get:
-      summary: Discord OAuth認証を開始
-      operationId: beginDiscordLogin
-      parameters:
-        - name: return_origin
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uri
-        - name: attempt
-          in: query
-          required: true
-          description: crypto.randomUUID()で生成したUUID v4
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '302':
-          description: state Cookieを設定してDiscordへリダイレクト
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-        '400':
-          $ref: '#/components/responses/AuthError'
-        '403':
-          $ref: '#/components/responses/AuthError'
-        '503':
-          $ref: '#/components/responses/AuthError'
-  /auth/callback:
-    get:
-      summary: Discord OAuthコールバック
-      operationId: completeDiscordLogin
-      parameters:
-        - name: code
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: state
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: error
-          in: query
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 検証済みOriginへJWTをpostMessageするHTML
-          content:
-            text/html:
-              schema:
-                type: string
-        '400':
-          description: OAuth拒否またはstate不正を示すno-store HTML
-          content:
-            text/html:
-              schema:
-                type: string
-        '403':
-          description: 許可Guildに所属していない
-          content:
-            text/html:
-              schema:
-                type: string
-        '502':
-          description: Discord API異常
-          content:
-            text/html:
-              schema:
-                type: string
-        '503':
-          description: 認証Secretを利用できない
-          content:
-            text/html:
-              schema:
-                type: string
   /auth/me:
     get:
       summary: 現在のJWT認証情報を確認
@@ -107,7 +24,7 @@ paths:
         - bearerAuth: []
       responses:
         '200':
-          description: 検証済みの認証情報とDiscordプロフィール
+          description: 検証済みの Discord プロフィール
           content:
             application/json:
               schema:
@@ -344,7 +261,7 @@ paths:
           $ref: '#/components/responses/AuthError'
     delete:
       summary: 自己紹介カードを削除
-      description: JWT の `is_admin` が true のサイト管理者だけが実行できます。
+      description: 検証済みの Discord ユーザー ID が Web API の管理者リストに含まれる場合に実行できます。
       operationId: deleteIntroductionCard
       security:
         - bearerAuth: []
@@ -354,7 +271,13 @@ paths:
         '401':
           $ref: '#/components/responses/AuthError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: 対象 Guild に所属していない、またはカード削除権限がない
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AuthErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '503':
@@ -500,29 +423,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-    Forbidden:
-      description: 操作権限がない
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
   schemas:
     AuthMeResponse:
       type: object
+      additionalProperties: false
       required:
-        - authenticated
-        - discord_user_id
         - username
         - avatar_url
-        - guilds
-        - is_admin
-        - expires_at
       properties:
-        authenticated:
-          type: boolean
-          enum: [true]
-        discord_user_id:
-          type: string
         username:
           type: string
           minLength: 2
@@ -532,15 +440,6 @@ components:
           type: string
           format: uri
           description: Discord CDNのカスタムまたはデフォルトアバターURL
-        guilds:
-          type: array
-          items:
-            type: string
-        is_admin:
-          type: boolean
-        expires_at:
-          type: integer
-          format: int64
     MembersOnlyResponse:
       type: object
       required: [message]
@@ -559,15 +458,10 @@ components:
             code:
               type: string
               enum:
-                - INVALID_REQUEST
-                - OAUTH_DENIED
-                - INVALID_STATE
                 - TOKEN_MISSING
                 - TOKEN_INVALID
                 - TOKEN_EXPIRED
-                - ORIGIN_NOT_ALLOWED
                 - NOT_A_MEMBER
-                - DISCORD_UPSTREAM_ERROR
                 - AUTH_UNAVAILABLE
             message:
               type: string

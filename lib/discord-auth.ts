@@ -201,13 +201,13 @@ export function useDiscordAuth() {
     stopPopupFlow();
     profileRequestRef.current?.abort();
 
-    if (typeof crypto.randomUUID !== "function") {
+    if (!authOrigin || typeof crypto.randomUUID !== "function") {
       showError();
       return;
     }
 
     const attempt = crypto.randomUUID();
-    const loginUrl = new URL("/auth/login", authOrigin);
+    const loginUrl = new URL("/auth/discord/login", authOrigin);
     loginUrl.searchParams.set("return_origin", window.location.origin);
     loginUrl.searchParams.set("attempt", attempt);
 
