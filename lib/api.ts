@@ -32,7 +32,6 @@ export type ApiWork = Partial<Omit<EventWork, "credits"> & PersonalWork> & {
   creatorIds?: string[];
   credits?: ApiEventCredit[];
   eventName?: string;
-  releasedAt?: string;
   publishedAt?: string;
 };
 
@@ -116,6 +115,7 @@ export function normalizeEventWork(work: ApiWork, requireCredits = false): Event
     creatorIds: work.creatorIds ?? [],
     event: work.event ?? work.eventName ?? "",
     year: work.year ?? (Number(releasedAt.slice(0, 4)) || 0),
+    releasedAt: work.releasedAt,
     links: work.links ?? [],
     credits: sortedCredits,
   };
