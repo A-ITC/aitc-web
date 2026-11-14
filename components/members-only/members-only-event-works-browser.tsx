@@ -11,6 +11,7 @@ import {
 import type { EventWork, Member } from "../data";
 import { typeLabel } from "../data";
 import { WorkCard, WorkModal } from "../work-ui";
+import { groupEventWorksByFiscalYear, sortEventWorks } from "./event-work-order";
 import { useMembersOnlyEventWorks } from "./hooks";
 import { MembersOnlyPanel } from "./members-only-panel";
 import { MembersOnlySpinner } from "./members-only-spinner";
@@ -22,7 +23,7 @@ const stateHeadingClassName =
   "mt-5 mb-2.5 text-2xl tracking-tighter md:text-3xl";
 const stateDescriptionClassName = "mt-0 mb-6 leading-relaxed text-slate-500";
 
-type FilterKey = "year" | "event" | "type" | "sort";
+type FilterKey = "event" | "type" | "sort";
 type FilterDefinition = {
   key: FilterKey;
   label: string;
@@ -43,6 +44,40 @@ function toMember(member: MembersOnlyMember): Member {
     profile: member.profile,
     links: member.links,
   };
+}
+
+function EventWorkGrid({
+  works,
+  members,
+  reduceMotion,
+  onSelect,
+}: {
+  works: EventWork[];
+  members: Member[];
+  reduceMotion: boolean | null;
+  onSelect: (work: EventWork) => void;
+}) {
+  return (
+    <div className="relative grid grid-cols-2 gap-3.5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+      <AnimatePresence mode="popLayout">
+        {works.map((work) => (
+          <motion.div
+            key={work.id}
+            layout={!reduceMotion}
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+          >
+            <WorkCard
+              work={work}
+              members={members}
+              onClick={() => onSelect(work)}
+            />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export function MembersOnlyEventWorksBrowser({
@@ -81,21 +116,22 @@ export function MembersOnlyEventWorksBrowser({
     [accessToken, invalidateAuthentication],
   );
   const members = useMemo(() => directory.map(toMember), [directory]);
-  const years = [
-    ...new Set(works.map((work) => String(work.year)).filter((year) => year !== "0")),
-  ].sort((a, b) => Number(b) - Number(a));
   const events = [...new Set(works.map((work) => work.event).filter(Boolean))].sort(
     (a, b) => a.localeCompare(b, "ja"),
   );
   const types = [...new Set(works.map((work) => work.type))].sort();
-  const year = valid(searchParams.get("year"), years);
   const eventName = valid(searchParams.get("event"), events);
   const type = valid(searchParams.get("type"), types);
-  const sort = valid(searchParams.get("sort"), ["new", "old", "title"]);
+  const sortParam = searchParams.get("sort");
+  const sort =
+    sortParam === "new" || sortParam === "old" || sortParam === "title"
+      ? sortParam
+      : "grouped";
 
   const setFilter = (key: FilterKey, value: string) => {
     const next = new URLSearchParams(searchParams.toString());
-    if (value === "all" || (key === "sort" && value === "new")) {
+    next.delete("year");
+    if (value === "all" || (key === "sort" && value === "grouped")) {
       next.delete(key);
     } else {
       next.set(key, value);
@@ -105,32 +141,25 @@ export function MembersOnlyEventWorksBrowser({
     });
   };
 
-  const visibleWorks = useMemo(
+  const filteredWorks = useMemo(
     () =>
-      [...works]
-        .filter(
-          (work) =>
-            (year === "all" || String(work.year) === year) &&
-            (eventName === "all" || work.event === eventName) &&
-            (type === "all" || work.type === type),
-        )
-        .sort((a, b) => {
-          if (sort === "title") return a.title.localeCompare(b.title, "ja");
-          return sort === "old" ? a.year - b.year : b.year - a.year;
-        }),
-    [eventName, sort, type, works, year],
+      works.filter(
+        (work) =>
+          (eventName === "all" || work.event === eventName) &&
+          (type === "all" || work.type === type),
+      ),
+    [eventName, type, works],
+  );
+  const groups = useMemo(
+    () => sort === "grouped" ? groupEventWorksByFiscalYear(filteredWorks) : [],
+    [filteredWorks, sort],
+  );
+  const sortedWorks = useMemo(
+    () => sort === "grouped" ? [] : sortEventWorks(filteredWorks, sort),
+    [filteredWorks, sort],
   );
 
   const filters: FilterDefinition[] = [
-    {
-      key: "year",
-      label: "年",
-      value: year,
-      options: [
-        { value: "all", label: "すべて" },
-        ...years.map((value) => ({ value, label: value })),
-      ],
-    },
     {
       key: "event",
       label: "イベント",
@@ -154,6 +183,7 @@ export function MembersOnlyEventWorksBrowser({
       label: "並び順",
       value: sort,
       options: [
+        { value: "grouped", label: "年度別" },
         { value: "new", label: "新しい順" },
         { value: "old", label: "古い順" },
         { value: "title", label: "タイトル順" },
@@ -214,32 +244,47 @@ export function MembersOnlyEventWorksBrowser({
         ))}
       </div>
       <p className="mt-10 mb-5 font-['DM_Mono',monospace] text-xs text-slate-500">
-        {visibleWorks.length} works
+        {filteredWorks.length} works
       </p>
-      {visibleWorks.length === 0 ? (
+      {filteredWorks.length === 0 ? (
         <p className="m-0 border border-slate-200 bg-white px-6 py-9 text-center text-slate-600">
           該当する作品はありません。
         </p>
-      ) : (
-        <div className="relative grid grid-cols-2 gap-3.5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
-          <AnimatePresence mode="popLayout">
-            {visibleWorks.map((work) => (
-              <motion.div
-                key={work.id}
-                layout={!reduceMotion}
-                initial={reduceMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={reduceMotion ? undefined : { opacity: 0 }}
-              >
-                <WorkCard
-                  work={work}
+      ) : sort === "grouped" ? (
+        <div className="grid gap-10">
+          {groups.map(({ fiscalYear, works }) => (
+            <details className="group min-w-0" key={fiscalYear ?? "unknown"} open>
+              <summary className="block cursor-pointer border border-slate-200 bg-slate-100 px-4 py-3 text-left text-xl font-bold tracking-tighter text-slate-900 transition-colors duration-200 hover:border-blue-300 hover:bg-slate-200 hover:text-[var(--blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-400 motion-reduce:transition-none md:text-2xl [&::-webkit-details-marker]:hidden">
+                <h2 className="m-0 flex items-center justify-between gap-4">
+                  <span>
+                    {fiscalYear === null ? "年度不明" : `${fiscalYear}年度`} ({works.length})
+                  </span>
+                  <span
+                    className="shrink-0 -rotate-90 text-xl leading-none text-[var(--blue)] transition-transform duration-200 group-open:rotate-0 motion-reduce:transition-none"
+                    aria-hidden="true"
+                  >
+                    ↓
+                  </span>
+                </h2>
+              </summary>
+              <div className="pt-5">
+                <EventWorkGrid
+                  works={works}
                   members={members}
-                  onClick={() => setSelected(work)}
+                  reduceMotion={reduceMotion}
+                  onSelect={setSelected}
                 />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              </div>
+            </details>
+          ))}
         </div>
+      ) : (
+        <EventWorkGrid
+          works={sortedWorks}
+          members={members}
+          reduceMotion={reduceMotion}
+          onSelect={setSelected}
+        />
       )}
       {selected && (
         <WorkModal

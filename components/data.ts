@@ -52,6 +52,7 @@ export type EventWork = {
   creatorIds: string[];
   event: string;
   year: number;
+  releasedAt?: string;
   links: Link[];
   credits?: EventCredit[];
 };
