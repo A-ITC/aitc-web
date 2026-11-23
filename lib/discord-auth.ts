@@ -27,8 +27,40 @@ type AuthMessage = {
   accessToken?: unknown;
 };
 
+function removeLegacyStoredToken(): void {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Legacy storage may be unavailable even when localStorage is usable.
+  }
+}
+
+function readStoredToken(): string | null {
+  const storedToken = localStorage.getItem(STORAGE_KEY);
+  if (storedToken) {
+    removeLegacyStoredToken();
+    return storedToken;
+  }
+
+  let legacyToken: string | null;
+  try {
+    legacyToken = sessionStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+  if (legacyToken) {
+    localStorage.setItem(STORAGE_KEY, legacyToken);
+    removeLegacyStoredToken();
+  }
+  return legacyToken;
+}
+
 function removeStoredToken(): void {
-  sessionStorage.removeItem(STORAGE_KEY);
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } finally {
+    removeLegacyStoredToken();
+  }
 }
 
 function parseDiscordProfile(body: unknown): DiscordProfile {
@@ -154,7 +186,7 @@ export function useDiscordAuth() {
         setProfileStatus("ready");
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || controller.signal.aborted) return;
 
         setProfile({ username: null, avatarUrl: null });
         setProfileStatus("ready");
@@ -179,8 +211,19 @@ export function useDiscordAuth() {
   useEffect(() => {
     mountedRef.current = true;
 
+    const receiveStorageChange = (event: StorageEvent) => {
+      if (event.storageArea !== localStorage) return;
+      if (
+        (event.key === STORAGE_KEY && event.newValue === null) ||
+        event.key === null
+      ) {
+        invalidateAuthentication();
+      }
+    };
+    window.addEventListener("storage", receiveStorageChange);
+
     try {
-      const storedToken = sessionStorage.getItem(STORAGE_KEY);
+      const storedToken = readStoredToken();
       if (!storedToken) {
         setStatus("unauthenticated");
       } else {
@@ -192,10 +235,11 @@ export function useDiscordAuth() {
 
     return () => {
       mountedRef.current = false;
+      window.removeEventListener("storage", receiveStorageChange);
       stopPopupFlow();
       profileRequestRef.current?.abort();
     };
-  }, [authenticateWithToken, showError, stopPopupFlow]);
+  }, [authenticateWithToken, invalidateAuthentication, showError, stopPopupFlow]);
 
   const startAuthentication = useCallback(() => {
     stopPopupFlow();
@@ -270,7 +314,8 @@ export function useDiscordAuth() {
       popupCleanupRef.current = null;
 
       try {
-        sessionStorage.setItem(STORAGE_KEY, message.accessToken);
+        localStorage.setItem(STORAGE_KEY, message.accessToken);
+        removeLegacyStoredToken();
       } catch {
         showError();
         return;
