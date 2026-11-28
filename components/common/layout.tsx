@@ -26,6 +26,14 @@ function Footer() {
           <Link href="/personal-works">個人作品集</Link>
           <Link href="/members-only">部員向け</Link>
           <a
+            href={withBasePath("/deathgame-ministry.html")}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="デスゲーム省（新しいタブで開く）"
+          >
+            デスゲーム省
+          </a>
+          <a
             className="inline-flex items-center gap-1.5"
             href="https://x.com/AInfTechClub"
             target="_blank"
