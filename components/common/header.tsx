@@ -20,7 +20,7 @@ export function Header() {
             alt=""
           />
           <Logo />
-          <small className="hidden font-['DM_Mono',monospace] text-xs leading-snug tracking-wide md:block">
+          <small className="hidden font-['DM_Mono',monospace] text-xs leading-snug tracking-wide lg:block">
             Alumni of Information
             <br />
             and Technology Club
@@ -35,7 +35,7 @@ export function Header() {
           ☰
         </button>
         <nav
-          className={`${open ? "flex" : "hidden"} absolute top-16 right-0 left-0 flex-col items-start gap-5 bg-white px-6 py-5 text-base font-bold shadow-lg md:static md:flex md:flex-row md:items-center md:gap-8 md:bg-transparent md:p-0 md:shadow-none`}
+          className={`${open ? "flex" : "hidden"} absolute top-16 right-0 left-0 flex-col items-start gap-5 bg-white px-6 py-5 text-base font-bold shadow-lg md:static md:flex md:flex-row md:items-center md:gap-4 lg:gap-8 md:bg-transparent md:p-0 md:shadow-none`}
           aria-label="メインナビゲーション"
         >
           {[
@@ -53,6 +53,16 @@ export function Header() {
               {item.label}
             </Link>
           ))}
+          <a
+            href={withBasePath("/deathgame-ministry.html")}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="デスゲーム省（新しいタブで開く）"
+            className="hover:bg-[image:var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[image:var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
+            onClick={close}
+          >
+            デスゲーム省
+          </a>
           <a
             className="group inline-flex items-center gap-1.5 text-base hover:bg-[image:var(--accent-gradient)] hover:bg-clip-text hover:text-transparent focus-visible:bg-[image:var(--accent-gradient)] focus-visible:bg-clip-text focus-visible:text-transparent"
             href="https://x.com/AInfTechClub"
